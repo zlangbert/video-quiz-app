@@ -3,10 +3,13 @@ package models
 import java.util.Date
 import java.text.DateFormat
 import java.io.File
+import scala.xml.XML
 
 case class ProblemStateKey(student:String, set:String)
 
 object ClassInfo {
+  val dir = "/home/mlewis/VideoQuizData/"
+  
   def apply(n:xml.Node):ClassInfo = {
     val course = (n \ "@course").text
     val section = (n \ "@section").text
@@ -16,7 +19,7 @@ object ClassInfo {
     val problemSets = (n \ "problemSet").map(dn => {
       val name = (dn \ "@name").text
       val closes = DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.SHORT).parse((dn \ "@closes").text)
-      (ProblemSet(new File(makeID(course,section,semester)),name),closes)
+      (ProblemSet(new File(dir+makeID(course,section,semester)),name),closes)
     }).map(set => set._1.name -> set).toMap
     val setResponses = (for(s <- students; (set,_) <- problemSets) yield ProblemStateKey(s,set) -> ProblemSetResponse.loadStates(s, makeID(course,section,semester), set)).toMap
     ClassInfo(course,section,semester,instructor,students,problemSets,setResponses)
@@ -25,6 +28,18 @@ object ClassInfo {
   def makeID(course:String,section:String,semester:String):String = {
     s"$semester-$course-$section"
   }
+  
+  def classesFor(user:String):List[ClassInfo] = {
+    allClasses.filter(c => c.students.contains(user) || c.instructor==user)
+  }
+  
+  def findClass(course:String,section:String,semester:String):Option[ClassInfo] =
+    allClasses.find(c => c.course == course && c.section == section && c.semester == semester)
+  
+  private var allClasses:List[ClassInfo] = {
+    (XML.loadFile(dir+"config.xml") \ "class").map(apply).toList 
+  }
+  
 }
 
 /**
@@ -38,6 +53,7 @@ case class ClassInfo(course:String,
     students:Seq[String],
     problemSets:Map[String,(ProblemSet,Date)],
     problemSetStates:Map[ProblemStateKey,ProblemSetState.State]) {
+  
   def id = ClassInfo.makeID(course,section,semester)
   
   def addResponse(psr:ProblemSetResponse, state:ProblemSetState.State) = copy(problemSetStates = problemSetStates + {

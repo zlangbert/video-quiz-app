@@ -89,6 +89,7 @@ sys.exit(0)
 
 sealed trait ProblemSpec {
   def checkResponse(response: ProblemResponse): Boolean
+  val prompt:String
 }
 
 case class MultipleChoice(prompt: String, options: Seq[String], correct: Int) extends ProblemSpec {

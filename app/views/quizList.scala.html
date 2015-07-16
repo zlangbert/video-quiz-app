@@ -1,0 +1,11 @@
+@(quizzes:List[ProblemSet])
+
+@main("Quiz List") {
+	<h2>Quizzes</h2>
+	@for(q <- quizzes) {
+		<p>@q.name</p>
+		@for(p <- q.problems) {
+			<p>@p.prompt</p>
+		}
+	}
+}
