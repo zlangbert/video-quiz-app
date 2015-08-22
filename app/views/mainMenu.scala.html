@@ -7,7 +7,7 @@
 	<p>Login</p>
 	@helper.form(action = routes.Application.verifyLogin) {
 		@helper.inputText(userForm("username"))
-		@helper.inputPassword(userForm("password"))
+		@helper.inputPassword(userForm("trinityid"))
 		<div class='form-actions'>
 			<button type='submit'>Login</button>
 		</div>

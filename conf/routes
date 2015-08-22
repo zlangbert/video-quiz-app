@@ -5,7 +5,11 @@
 # Home page
 GET     /                           controllers.Application.index
 
+GET		/dbtest						controllers.Application.index2(uname)
+
 POST	/login						controllers.Application.verifyLogin
+
+GET		/logout						controllers.Application.logout
 
 GET		/quizList					controllers.Application.quizList
 
