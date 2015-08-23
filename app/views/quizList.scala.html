@@ -1,11 +1,30 @@
-@(quizzes:List[ProblemSet])
+@(quizzes:Seq[(String,Seq[(Tables.QuizzesRow,java.sql.Timestamp)], Seq[(Tables.QuizzesRow,Int,Int)])])
 
 @main("Quiz List") {
-	<h2>Quizzes</h2>
-	@for(q <- quizzes) {
-		<p>@q.name</p>
-		@for(p <- q.problems) {
-			<p>@p.prompt</p>
+	<h2>Open Quizzes</h2>
+	@for((cname,openQuizzes,completedQuizzes) <- quizzes) {
+		<h3>@cname</h3>
+		<table border="1">
+		<tr><th>Quiz Name</th><th>Description</th><th>Closing Time</th></tr>
+		@for((q,t) <- openQuizzes) {
+			<tr>
+			<td>@q.name</td>
+			<td>@q.description</td>
+			<td>@t</td>
+			</tr>
 		}
+		</table>
+		<h3>Completed Quizzes</h3>
+		<table border="1">
+		<tr><th>Quiz Name</th><th>Description</th><th>Correct / Total</th></tr>
+		@for((q,c,t) <- completedQuizzes) {
+			<tr>
+			<td>@q.name</td>
+			<td>@q.description</td>
+			<td>@c / @t</td>
+			</tr>
+		}
+		<tr><td>Total</td><td></td><td>@{completedQuizzes.map(_._2).sum} / @{completedQuizzes.map(_._3).sum}</td></tr>
+		</table>
 	}
 }

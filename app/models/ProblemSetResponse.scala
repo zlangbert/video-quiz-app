@@ -5,7 +5,7 @@ import java.io.PrintWriter
 
 object ProblemSetResponse {
   def loadStates(student: String, course: String, set: String):ProblemSetState.State = {
-    val dir = new File(s"${ClassInfo.dir}/$course/$set/$student")
+    val dir = new File(s"dir/$course/$set/$student")
     if (dir.exists) {
       var ret = ProblemSetState.Submitted
       var sub = 0
@@ -24,7 +24,7 @@ object ProblemSetResponse {
   }
   
   def apply(student: String, course: String, set: String, numProblems: Int): Seq[(ProblemSetResponse, ProblemSetState.State)] = {
-    val dir = new File(s"${ClassInfo.dir}/$course/$set/$student")
+    val dir = new File(s"dir/$course/$set/$student")
     if (dir.exists) {
       var ret = List[(ProblemSetResponse, ProblemSetState.State)]()
       var sub = 0
@@ -56,7 +56,7 @@ object ProblemSetResponse {
 
 case class ProblemSetResponse(student: String, course: String, set: String, responses: Seq[ProblemResponse]) {
   def record(correct: Boolean): Unit = {
-    val dir = new File(s"${ClassInfo.dir}/$course/$set/$student")
+    val dir = new File(s"{ClassInfo.dir}/$course/$set/$student")
     if (!dir.exists()) dir.mkdirs()
     var sub = 0
     var subDir = new File(dir, s"Sub$sub")

@@ -10,7 +10,8 @@ CREATE TABLE courses (
 
 CREATE TABLE users (
 	userid INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
-	username VARCHAR(8) NOT NULL);
+	username VARCHAR(8) NOT NULL,
+	trinityid VARCHAR(7) NOT NULL);
 
 CREATE TABLE user_course_assoc (
 	userid INT,
@@ -21,13 +22,14 @@ CREATE TABLE user_course_assoc (
 
 CREATE TABLE quizzes (
 	quizid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	name VARCHAR(80) NOT NULL,
 	description VARCHAR(4000) NOT NULL);
 
 CREATE TABLE quiz_course_close_assoc (
 	quizid INT,
 	FOREIGN KEY (quizid) REFERENCES quizzes (quizid) ON DELETE CASCADE, 
 	courseid INT,
-	FOREIGN KEY (courseid) REFERENCES course (courseid) ON DELETE CASCADE, 
+	FOREIGN KEY (courseid) REFERENCES courses (courseid) ON DELETE CASCADE, 
 	close_time TIMESTAMP NOT NULL);
 
 CREATE TABLE multiple_choice_questions (
@@ -72,7 +74,7 @@ CREATE TABLE lambda_assoc (
 	quizid INT,
 	FOREIGN KEY (quizid) REFERENCES quizzes (quizid) ON DELETE CASCADE,
 	lambda_question_id INT,
-	FOREIGN KEY (lambda_quiestion_id) REFERENCES lambda_questions (lambda_question_id) ON DELETE CASCADE);
+	FOREIGN KEY (lambda_question_id) REFERENCES lambda_questions (lambda_question_id) ON DELETE CASCADE);
 
 CREATE TABLE expression_questions (
 	expr_question_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -109,7 +111,7 @@ CREATE TABLE mc_answers (
 	mc_question_id INT,
 	FOREIGN KEY (mc_question_id) REFERENCES multiple_choice_questions (mc_question_id) ON DELETE CASCADE,
 	selection INT NOT NULL,
-	correct BOOLEAN);
+	correct BOOLEAN NOT NULL);
 	
 CREATE TABLE code_answers (
 	userid INT,
@@ -119,5 +121,5 @@ CREATE TABLE code_answers (
 	question_id INT NOT NULL,
 	question_type INT NOT NULL,
 	answer VARCHAR(4000) NOT NULL,
-	correct BOOLEAN);
+	correct BOOLEAN NOT NULL);
 
