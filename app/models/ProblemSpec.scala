@@ -5,8 +5,17 @@ import java.io.PrintWriter
 import sys.process._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
+import slick.driver.MySQLDriver.api._
+import scala.concurrent.duration.Duration
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import Tables._
+
 
 object ProblemSpec {
+  def apply(type:Int, id:Int, db: Database): ProblemSpec = {
+    
+  }
   def apply(n: xml.Node, baseDir: File): ProblemSpec = {
     (n \ "@type").text match {
       case "mchoice" =>

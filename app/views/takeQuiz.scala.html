@@ -1,6 +1,43 @@
 @* takeQuiz Template File *@
-@(set:ProblemSet,quizForm:Form[ProblemSetResponse])
+@(quiz:QuizData)
 
-@main("Take " + set.name) {
-	<h2>Take Quiz - @set.name</h2>
+@main("Take " + quiz.name, true) {
+	<h2>Take Quiz - @quiz.name</h2>
+	<p>@quiz.description</p>
+	<form method="post" action="submitQuiz">
+		<input type="hidden" name="quizid" value="@quiz.quizid"/>
+		@for(mcd <- quiz.multipleChoice) {
+			<div>
+			<p>@mcd.prompt</p>
+			@if(mcd.answer.nonEmpty) {
+				<ol>
+				@for(a <- mcd.options) {
+					<li>@a</li>
+				}
+				</ol>
+				<p>Already answered. @{mcd.answer.get+1}</p>
+			} else {
+				<fieldset>
+				@for((a,i) <- mcd.options.zipWithIndex) {
+					<input type="radio" name="mc-@mcd.mcid" value="@i">@a<br>
+				}
+				</fieldset>
+			}
+			</div>
+			<hr>
+		}
+		@for(cq <- quiz.codeQuestions) {
+			<div>
+			<p>@cq.prompt</p>
+			@if(cq.correct) {
+				<p>You have answered this correctly with.</p>
+				<pre>@cq.lastCode.get</pre>
+			} else {
+				<textarea name="code-@cq.questionid-@cq.questionType" rows="10" cols="80" placeholder="Write your @cq.typeString here.">@if(cq.lastCode.nonEmpty) {@cq.lastCode.get}</textarea>
+			}
+			</div>
+			<hr>
+		}
+		<input type="submit"/>
+	</form>
 }

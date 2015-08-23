@@ -1,6 +1,31 @@
 @* viewQuiz Template File *@
-@(set:ProblemSet, response:ProblemSetResponse)
+@(quiz:QuizData)
 
-@main("View " + set.name) {
-	
+@main("View " + quiz.name, true) {
+	<h2>View Quiz - @quiz.name</h2>
+	<p>@quiz.description</p>
+	@for(mcd <- quiz.multipleChoice) {
+		<div>
+		<p>@mcd.prompt</p>
+		<ol>
+		@for(a <- mcd.options) {
+			<li>@a</li>
+		}
+		</ol>
+		<p>Answered. @{mcd.answer.get+1}</p>
+		</div>
+		<hr>
+	}
+	@for(cq <- quiz.codeQuestions) {
+		<div>
+		<p>@cq.prompt</p>
+		@if(cq.correct) {
+			<p>You answered this correctly with the following code.</p>
+		} else {
+			<p>You answered this incorrectly with the following code.</p>
+		}
+		<pre>@cq.lastCode.get</pre>
+		</div>
+		<hr>
+	}		
 }

@@ -1,4 +1,4 @@
-@(title: String)(content: Html)
+@(title: String, showLogout: Boolean)(content: Html)
 
 <!DOCTYPE html>
 
@@ -21,6 +21,9 @@
 		<script src="https://apis.google.com/js/platform.js" async defer></script>
     </head>
     <body>
+    	@if(showLogout) {
+    		<p><a href="@routes.Application.logout">Logout</a></p>
+    	}
         @content
     </body>
 </html>

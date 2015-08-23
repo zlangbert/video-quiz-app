@@ -1,7 +1,6 @@
 package models
 
 import slick.driver.MySQLDriver.api._
-import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.duration.Duration
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -97,5 +96,97 @@ object Queries {
     val correct = numberOfCorrectQuestions(quizid, userid, db);
     for(t <- total; c <- correct) yield (c,t)
   }
+  
+  def multipleChoiceData(quizid:Int, userid:Int, db:Database): Future[Seq[MultipleChoiceData]] = {
+    val rows = db.run {
+      (for {
+        (mcq,mca) <- MultipleChoiceQuestions join MultipleChoiceAssoc on (_.mcQuestionId === _.mcQuestionId)
+        if mca.quizid === quizid
+      } yield mcq).result
+    }
+    val data = rows.flatMap(s => Future.sequence { 
+      for {
+        row <- s
+      } yield {
+        val options = Seq(row.option1, row.option2) ++ Seq(row.option3, row.option4, row.option5, row.option6,
+            row.option7, row.option8).filter(_.nonEmpty).map(_.get)
+        val userAnswer = db.run((for{
+          ans <- McAnswers
+          if ans.userid === userid && ans.quizid === quizid && ans.mcQuestionId === row.mcQuestionId
+        } yield ans.selection).result)
+        userAnswer.map(ans => MultipleChoiceData(row.mcQuestionId, row.prompt, options, row.correctOption, if(ans.isEmpty) None else Some(ans.head)))
+      }
+    })
+    data
+  }
 
+  def codeQuestionData(quizid:Int, userid:Int, db:Database): Future[Seq[CodeQuestionData]] = {
+    val funcRows = db.run {
+      (for {
+        (fq,fa) <- FunctionQuestions join FunctionAssoc on (_.funcQuestionId === _.funcQuestionId)
+        if fa.quizid === quizid
+      } yield fq).result
+    }
+    val funcData = funcRows.flatMap(s => Future.sequence { 
+      for {
+        row <- s
+      } yield {
+        val userAnswers = db.run((for{
+          ans <- CodeAnswers
+          if ans.userid === userid && ans.quizid === quizid && ans.questionId === row.funcQuestionId && ans.questionType === 1
+        } yield ans).result)
+        userAnswers.map(ans => CodeQuestionData(row.funcQuestionId, 1, row.prompt, if(ans.isEmpty) None else Some(ans.last.answer), ans.exists(_.correct)))
+      }
+    })
+    val lambdaRows = db.run {
+      (for {
+        (lq,la) <- LambdaQuestions join LambdaAssoc on (_.lambdaQuestionId === _.lambdaQuestionId)
+        if la.quizid === quizid
+      } yield lq).result
+    }
+    val lambdaData = lambdaRows.flatMap(s => Future.sequence { 
+      for {
+        row <- s
+      } yield {
+        val userAnswers = db.run((for{
+          ans <- CodeAnswers
+          if ans.userid === userid && ans.quizid === quizid && ans.questionId === row.lambdaQuestionId && ans.questionType === 2
+        } yield ans).result)
+        userAnswers.map(ans => CodeQuestionData(row.lambdaQuestionId, 2, row.prompt, if(ans.isEmpty) None else Some(ans.last.answer), ans.exists(_.correct)))
+      }
+    })
+    val exprRows = db.run {
+      (for {
+        (eq,ea) <- ExpressionQuestions join ExpressionAssoc on (_.exprQuestionId === _.exprQuestionId)
+        if ea.quizid === quizid
+      } yield eq).result
+    }
+    val exprData = exprRows.flatMap(s => Future.sequence { 
+      for {
+        row <- s
+      } yield {
+        val userAnswers = db.run((for{
+          ans <- CodeAnswers
+          if ans.userid === userid && ans.quizid === quizid && ans.questionId === row.exprQuestionId && ans.questionType === 3
+        } yield ans).result)
+        userAnswers.map(ans => CodeQuestionData(row.exprQuestionId, 3, row.prompt, if(ans.isEmpty) None else Some(ans.last.answer), ans.exists(_.correct)))
+      }
+    })
+    for {
+      fd <- funcData
+      ld <- lambdaData
+      ed <- exprData
+    } yield fd ++ ld ++ ed
+  }
+
+  def quizData(quizid:Int, userid:Int, db:Database): Future[QuizData] = {
+    val quizRow = db.run(Quizzes.filter(_.quizid === quizid).result.head)
+    val mcQuestions = multipleChoiceData(quizid, userid, db)
+    val codeQuestions = codeQuestionData(quizid, userid, db)
+    for {
+      qr <- quizRow
+      mc <- mcQuestions
+      cq <- codeQuestions
+    } yield QuizData(quizid,userid,qr.name,qr.description,mc,cq)
+  }
 }

@@ -48,11 +48,27 @@ class Application extends Controller {
           } yield (p, correct, total)
           Future.sequence(completeData).map(cd => open -> cd)
         })
-        quizTuple.map(qt => (c.code + " " + c.section + " " + c.semester, qt._1, qt._2))
+        quizTuple.map(qt => (c.code + "-" + c.section + "-" + c.semester, qt._1, qt._2))
       })
     }).flatMap(f => f)
     quizzes.map(qs => Ok(views.html.quizList(qs)))
   })
+  
+  def viewQuiz(quizid:Int) = AuthenticatedAction { request => {
+    val quizData = Queries.quizData(quizid,request.session.get("userid").getOrElse("-1").toInt, dbConfig.db)
+    quizData.map(qd => Ok(views.html.viewQuiz(qd)))
+  } }
+
+  def takeQuiz(quizid:Int) = AuthenticatedAction { request => {
+    val quizData = Queries.quizData(quizid,request.session.get("userid").getOrElse("-1").toInt, dbConfig.db)
+    quizData.map(qd => Ok(views.html.takeQuiz(qd)))
+  } }
+  
+  def submitQuiz = AuthenticatedAction { request => {
+    // Get quiz specs from database
+    // Check correctness of each element and write to database
+    Future(Redirect(routes.Application.quizList()))
+  } }
 
   def fetch(user: String) = AuthenticatedAction { request =>
     Queries.fetchUserByName(user, dbConfig.db).map(user => Ok(Queries.coursesFor(user.userid, dbConfig.db).toString()))

@@ -42,7 +42,8 @@ CREATE TABLE multiple_choice_questions (
 	option5 VARCHAR(4000),
 	option6 VARCHAR(4000),
 	option7 VARCHAR(4000),
-	option8 VARCHAR(4000));
+	option8 VARCHAR(4000),
+	correct_option INT NOT NULL);
 
 CREATE TABLE multiple_choice_assoc (
 	quizid INT,

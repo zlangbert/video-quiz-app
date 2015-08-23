@@ -11,6 +11,12 @@ GET		/logout						controllers.Application.logout
 
 GET		/quizList					controllers.Application.quizList
 
+GET		/viewQuiz					controllers.Application.viewQuiz(quizid:Int)
+
+GET		/takeQuiz					controllers.Application.takeQuiz(quizid:Int)
+
+POST	/submitQuiz					controllers.Application.submitQuiz
+
 GET		/fetch/:user				controllers.Application.fetch(user)
 
 # Map static resources from the /public folder to the /assets URL path

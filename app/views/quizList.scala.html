@@ -1,14 +1,14 @@
 @(quizzes:Seq[(String,Seq[(Tables.QuizzesRow,java.sql.Timestamp)], Seq[(Tables.QuizzesRow,Int,Int)])])
 
-@main("Quiz List") {
-	<h2>Open Quizzes</h2>
+@main("Quiz List", true) {
 	@for((cname,openQuizzes,completedQuizzes) <- quizzes) {
-		<h3>@cname</h3>
+		<h2>@cname</h2>
+		<h3>Open Quizzes</h3>
 		<table border="1">
 		<tr><th>Quiz Name</th><th>Description</th><th>Closing Time</th></tr>
 		@for((q,t) <- openQuizzes) {
 			<tr>
-			<td>@q.name</td>
+			<td><a href="@routes.Application.takeQuiz(q.quizid)">@q.name</a></td>
 			<td>@q.description</td>
 			<td>@t</td>
 			</tr>
@@ -19,7 +19,7 @@
 		<tr><th>Quiz Name</th><th>Description</th><th>Correct / Total</th></tr>
 		@for((q,c,t) <- completedQuizzes) {
 			<tr>
-			<td>@q.name</td>
+			<td><a href="@routes.Application.viewQuiz(q.quizid)">@q.name</a></td>
 			<td>@q.description</td>
 			<td>@c / @t</td>
 			</tr>

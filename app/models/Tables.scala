@@ -336,18 +336,19 @@ trait Tables {
    *  @param option5 Database column option5 SqlType(VARCHAR), Length(4000,true), Default(None)
    *  @param option6 Database column option6 SqlType(VARCHAR), Length(4000,true), Default(None)
    *  @param option7 Database column option7 SqlType(VARCHAR), Length(4000,true), Default(None)
-   *  @param option8 Database column option8 SqlType(VARCHAR), Length(4000,true), Default(None) */
-  case class MultipleChoiceQuestionsRow(mcQuestionId: Int, prompt: String, option1: String, option2: String, option3: Option[String] = None, option4: Option[String] = None, option5: Option[String] = None, option6: Option[String] = None, option7: Option[String] = None, option8: Option[String] = None)
+   *  @param option8 Database column option8 SqlType(VARCHAR), Length(4000,true), Default(None)
+   *  @param correctOption Database column correct_option SqlType(INT) */
+  case class MultipleChoiceQuestionsRow(mcQuestionId: Int, prompt: String, option1: String, option2: String, option3: Option[String] = None, option4: Option[String] = None, option5: Option[String] = None, option6: Option[String] = None, option7: Option[String] = None, option8: Option[String] = None, correctOption: Int)
   /** GetResult implicit for fetching MultipleChoiceQuestionsRow objects using plain SQL queries */
   implicit def GetResultMultipleChoiceQuestionsRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[String]]): GR[MultipleChoiceQuestionsRow] = GR{
     prs => import prs._
-    MultipleChoiceQuestionsRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String]))
+    MultipleChoiceQuestionsRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<?[String], <<[Int]))
   }
   /** Table description of table multiple_choice_questions. Objects of this class serve as prototypes for rows in queries. */
   class MultipleChoiceQuestions(_tableTag: Tag) extends Table[MultipleChoiceQuestionsRow](_tableTag, "multiple_choice_questions") {
-    def * = (mcQuestionId, prompt, option1, option2, option3, option4, option5, option6, option7, option8) <> (MultipleChoiceQuestionsRow.tupled, MultipleChoiceQuestionsRow.unapply)
+    def * = (mcQuestionId, prompt, option1, option2, option3, option4, option5, option6, option7, option8, correctOption) <> (MultipleChoiceQuestionsRow.tupled, MultipleChoiceQuestionsRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(mcQuestionId), Rep.Some(prompt), Rep.Some(option1), Rep.Some(option2), option3, option4, option5, option6, option7, option8).shaped.<>({r=>import r._; _1.map(_=> MultipleChoiceQuestionsRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7, _8, _9, _10)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(mcQuestionId), Rep.Some(prompt), Rep.Some(option1), Rep.Some(option2), option3, option4, option5, option6, option7, option8, Rep.Some(correctOption)).shaped.<>({r=>import r._; _1.map(_=> MultipleChoiceQuestionsRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7, _8, _9, _10, _11.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column mc_question_id SqlType(INT), AutoInc, PrimaryKey */
     val mcQuestionId: Rep[Int] = column[Int]("mc_question_id", O.AutoInc, O.PrimaryKey)
@@ -369,6 +370,8 @@ trait Tables {
     val option7: Rep[Option[String]] = column[Option[String]]("option7", O.Length(4000,varying=true), O.Default(None))
     /** Database column option8 SqlType(VARCHAR), Length(4000,true), Default(None) */
     val option8: Rep[Option[String]] = column[Option[String]]("option8", O.Length(4000,varying=true), O.Default(None))
+    /** Database column correct_option SqlType(INT) */
+    val correctOption: Rep[Int] = column[Int]("correct_option")
   }
   /** Collection-like TableQuery object for table MultipleChoiceQuestions */
   lazy val MultipleChoiceQuestions = new TableQuery(tag => new MultipleChoiceQuestions(tag))
