@@ -1,5 +1,13 @@
 package models
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
+import slick.driver.MySQLDriver.api._
+import scala.concurrent.duration.Duration
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import Tables._
+
 /**
  * @author mlewis
  */
@@ -9,46 +17,28 @@ object VariableType extends Enumeration {
 }
 
 object VariableSpec {
-  def apply(n: xml.Node): VariableSpec = {
-    (n \ "@type").text match {
-      case "Int" =>
-        val name = (n \ "@name").text
-        val min = (n \ "@min").text.toInt
-        val max = (n \ "@max").text.toInt
-        IntSpec(name, min, max)
-      case "Double" =>
-        val name = (n \ "@name").text
-        val min = (n \ "@min").text.toDouble
-        val max = (n \ "@max").text.toDouble
-        DoubleSpec(name, min, max)
-      case "String" =>
-        val name = (n \ "@name").text
-        val length = (n \ "@length").text.toInt
-        val genCode = (n \ "genCode").text.trim
-        StringSpec(name, length,genCode)
-      case "List[Int]" =>
-        val name = (n \ "@name").text
-        val minLen = (n \ "@minLen").text.toInt
-        val maxLen = (n \ "@maxLen").text.toInt
-        val min = (n \ "@min").text.toInt
-        val max = (n \ "@max").text.toInt
-        ListIntSpec(name, minLen, maxLen, min, max)
-      case "Array[Int]" =>
-        val name = (n \ "@name").text
-        val minLen = (n \ "@minLen").text.toInt
-        val maxLen = (n \ "@maxLen").text.toInt
-        val min = (n \ "@min").text.toInt
-        val max = (n \ "@max").text.toInt
-        ArrayIntSpec(name, minLen, maxLen, min, max)
-      case "List[String]" =>
-        val name = (n \ "@name").text
-        val minLen = (n \ "@minLen").text.toInt
-        val maxLen = (n \ "@maxLen").text.toInt
-        val stringLength = (n \ "@stringLength").text.toInt
-        val genCode = (n \ "genCode").text.trim
-        ListStringSpec(name, minLen, maxLen, stringLength, genCode)
-    }
+  val IntSpecType = 0
+  val DoubleSpecType = 1
+  val StringSpecType = 2
+  val IntListSpecType = 3
+  val IntArraySpecType = 4
+  val StringListSpecType = 5
+
+  def apply(vs:VariableSpecificationsRow): VariableSpec = vs.specType match {
+    case IntSpecType =>
+      IntSpec(vs.name, vs.min.get, vs.max.get)
+    case DoubleSpecType =>
+      DoubleSpec(vs.name, vs.min.get, vs.max.get)
+    case StringSpecType =>
+      StringSpec(vs.name, vs.length.get, vs.genCode.getOrElse(""))
+    case IntListSpecType =>
+      ListIntSpec(vs.name, vs.minLength.get, vs.maxLength.get, vs.min.get, vs.max.get)
+    case IntArraySpecType =>
+      ArrayIntSpec(vs.name, vs.minLength.get, vs.maxLength.get, vs.min.get, vs.max.get)
+    case StringListSpecType =>
+      ListStringSpec(vs.name, vs.minLength.get, vs.maxLength.get, vs.length.get, vs.genCode.getOrElse(""))
   }
+  
 }
 
 sealed trait VariableSpec {

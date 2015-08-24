@@ -29,7 +29,6 @@ class Application extends Controller {
   def quizList = AuthenticatedAction(request => {
     val uname = request.session.get("username").getOrElse("No name")
     val uid = request.session.get("userid").getOrElse("-1").toInt
-    println("Username is " + uname)
     val db = dbConfig.db
     val classes = Queries.coursesFor(uid, db)
     val quizzes = (for (s <- classes) yield {
@@ -37,16 +36,15 @@ class Application extends Controller {
         val classQuizzes = Queries.allQuizzesForClass(c.courseid, db)
         val now = new Timestamp(new Date().getTime)
         val quizTuple = classQuizzes.flatMap(quizzes => {
-          val (open, completed) = quizzes.partition(now.getTime < _._2.getTime)
-          val completeData = for {
-            (p, t) <- completed
+          val quizData = for {
+            (p, t) <- quizzes
             tot = Queries.numberOfQuestions(p.quizid, db)
             corr = Queries.numberOfCorrectQuestions(p.quizid, uid, db)
           } yield for {
             correct <- corr
             total <- tot
-          } yield (p, correct, total)
-          Future.sequence(completeData).map(cd => open -> cd)
+          } yield (p, t, correct, total)
+          Future.sequence(quizData).map(qd => qd.partition(now.getTime < _._2.getTime))
         })
         quizTuple.map(qt => (c.code + "-" + c.section + "-" + c.semester, qt._1, qt._2))
       })
@@ -65,8 +63,27 @@ class Application extends Controller {
   } }
   
   def submitQuiz = AuthenticatedAction { request => {
-    // Get quiz specs from database
-    // Check correctness of each element and write to database
+    val db = dbConfig.db
+    val userid = request.session("userid").toInt
+    request.body.asFormUrlEncoded match {
+      case Some(params) =>
+        val quizid = params("quizid")(0).toInt
+        // Get quiz specs from database and check correctness
+        for(key <- params.keys; if key.startsWith("mc-")) {
+          val mcid = key.drop(3).toInt
+          val pspec = ProblemSpec(ProblemSpec.MultipleChoiceType,mcid,db)
+          val correct = pspec.map(_.checkResponse(params(key)(0)))
+          val selection = try { params(key)(0).toInt } catch { case e:NumberFormatException => -1 }
+          correct.map(c => db.run(McAnswers += McAnswersRow(Some(userid),Some(quizid),Some(mcid),selection,c)))
+        }
+        for(key <- params.keys; if key.startsWith("code-")) {
+          val Array(codeid,qtype) = key.drop(5).split("-")
+          val pspec = ProblemSpec(qtype.toInt,codeid.toInt,db)
+          val correct = pspec.map(_.checkResponse(params(key)(0)))
+          correct.map(c => db.run(CodeAnswers += CodeAnswersRow(Some(userid),Some(quizid),codeid.toInt,qtype.toInt,params(key)(0),c)))
+        }
+      case None =>
+    }
     Future(Redirect(routes.Application.quizList()))
   } }
 
@@ -75,11 +92,8 @@ class Application extends Controller {
   }
 
   def verifyLogin = Action.async(implicit request => {
-    println("Verify")
     userForm.bindFromRequest().fold(
       formWithErrors => {
-        println(formWithErrors)
-        println(userForm)
         Future { Redirect(routes.Application.index) }
       },
       value =>

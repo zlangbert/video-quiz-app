@@ -11,57 +11,42 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import Tables._
 
-
 object ProblemSpec {
-  def apply(type:Int, id:Int, db: Database): ProblemSpec = {
-    
-  }
-  def apply(n: xml.Node, baseDir: File): ProblemSpec = {
-    (n \ "@type").text match {
-      case "mchoice" =>
-        val options = (n \ "option")
-        MultipleChoice((n \ "prompt").text.trim, options map (_.text.trim), options.indexWhere(on => (on \ "@correct").text == "true"))
-      case "function" =>
-        val codeFile = (n \ "@codeFile").text.trim
-        val correctCode = if (codeFile.isEmpty()) (n \ "correctCode").text.trim else {
-          val source = io.Source.fromFile(new File(baseDir, codeFile))
-          val text = source.mkString
-          source.close
-          text
-        }
-        val name = (n \ "@functionName").text
-        val varSpecs = (n \ "varSpec").map(n => VariableSpec(n))
-        val numRuns = if ((n \ "@numRuns").isEmpty) 100 else (n \ "@numRuns").text.toInt
-        WriteFunction((n \ "prompt").text.trim, correctCode, name, varSpecs, numRuns)
-      case "literal" =>
-        val codeFile = (n \ "@codeFile").text.trim
-        val correctCode = if (codeFile.isEmpty()) (n \ "correctCode").text.trim else {
-          val source = io.Source.fromFile(new File(baseDir, codeFile))
-          val text = source.mkString
-          source.close
-          text
-        }
-        val returnType = (n \ "@returnType").text
-        val varSpecs = (n \ "varSpec").map(n => VariableSpec(n))
-        val numRuns = if ((n \ "@numRuns").isEmpty) 100 else (n \ "@numRuns").text.toInt
-        WriteFunctionLiteral((n \ "prompt").text.trim, correctCode, returnType, varSpecs, numRuns)
-      case "expression" =>
-        val codeFile = (n \ "@codeFile").text.trim
-        val correctCode = if (codeFile.isEmpty()) (n \ "correctCode").text.trim else {
-          val source = io.Source.fromFile(new File(baseDir, codeFile))
-          val text = source.mkString
-          source.close
-          text
-        }
-        val varSpecs = (n \ "varSpec").map(n => VariableSpec(n))
-        val generalSetup = (n \ "generalSetup").text.trim
-        val numRuns = if ((n \ "@numRuns").isEmpty) 100 else (n \ "@numRuns").text.toInt
-        WriteExpression((n \ "prompt").text.trim, correctCode, varSpecs, generalSetup, numRuns)
-      case "iocode" => ???
-      case "code completion" => ???
-      case "code compiles" => ???
-      case "regex matching" => ???
-      case "file submit" => ???
+  val MultipleChoiceType = 0
+  val FunctionType = 1
+  val LambdaType = 2
+  val ExpressionType = 3
+  
+  def apply(questionType: Int, id: Int, db: Database): Future[ProblemSpec] = {
+    questionType match {
+      case MultipleChoiceType => // multiple choice
+        val mcRow = db.run(MultipleChoiceQuestions.filter(_.mcQuestionId === id).result.head)
+        mcRow.map(row => {
+          val options = Seq(row.option1, row.option2) ++ Seq(row.option3, row.option4, row.option5, row.option6,
+              row.option7, row.option8).filter(_.nonEmpty).map(_.get)
+          MultipleChoice(row.prompt,Nil,row.correctOption)
+        })
+      case FunctionType => // function
+        val funcRow = db.run(FunctionQuestions.filter(_.funcQuestionId === id).result.head)
+        funcRow.flatMap(row => {
+          val specs = db.run(VariableSpecifications.filter(vs => vs.questionId === id && vs.questionType === FunctionType)
+              .sortBy(_.paramNumber).result).map(s => s.map(vs => VariableSpec(vs)))
+          specs.map(s => WriteFunction(row.prompt,row.correctCode,row.functionName,s,row.numRuns))
+        })
+      case LambdaType => // lambda
+        val lambdaRow = db.run(LambdaQuestions.filter(_.lambdaQuestionId === id).result.head)
+        lambdaRow.flatMap(row => {
+          val specs = db.run(VariableSpecifications.filter(vs => vs.questionId === id && vs.questionType === LambdaType)
+              .sortBy(_.paramNumber).result).map(s => s.map(vs => VariableSpec(vs)))
+          specs.map(s => WriteFunctionLiteral(row.prompt,row.correctCode,row.returnType,s,row.numRuns))
+        })
+      case ExpressionType => // expression
+        val exprRow = db.run(ExpressionQuestions.filter(_.exprQuestionId === id).result.head)
+        exprRow.flatMap(row => {
+          val specs = db.run(VariableSpecifications.filter(vs => vs.questionId === id && vs.questionType === ExpressionType)
+              .sortBy(_.paramNumber).result).map(s => s.map(vs => VariableSpec(vs)))
+          specs.map(s => WriteExpression(row.prompt,row.correctCode,s,row.generalSetup,row.numRuns))
+        })
     }
   }
 
@@ -91,27 +76,31 @@ sys.exit(0)
     pw.close
     val process = s"scala ${tmpFile.getAbsolutePath()}".run()
     val ret = process.exitValue == 0
-    println("Done running - "+ret)
+    println("Done running - " + ret)
     ret
   }
 }
 
 sealed trait ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean
-  val prompt:String
+  def checkResponse(response: String): Boolean
+  val prompt: String
 }
 
 case class MultipleChoice(prompt: String, options: Seq[String], correct: Int) extends ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean = {
-    response.text.nonEmpty && response.text.head.toInt == correct
+  def checkResponse(response: String): Boolean = {
+    try {
+      response!=null && response.toInt == correct
+    } catch {
+      case e:NumberFormatException => false
+    }
   }
 }
 
 case class WriteFunction(prompt: String, correctCode: String, functionName: String, varSpecs: Seq[VariableSpec], numRuns: Int) extends ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean = {
+  def checkResponse(response: String): Boolean = {
     val code = s"""
-      ${correctCode.replaceAll(functionName, functionName+"Correct")}
-      ${response.text.head}
+      ${correctCode.replaceAll(functionName, functionName + "Correct")}
+      $response
       ${varSpecs.map(_.codeGenerator).mkString("\n")}
       val theirFunc = $functionName(${varSpecs.map(_.name).mkString(",")})
       val correctFunc = ${functionName}Correct(${varSpecs.map(_.name).mkString(",")})
@@ -122,7 +111,7 @@ case class WriteFunction(prompt: String, correctCode: String, functionName: Stri
 }
 
 case class WriteFunctionLiteral(prompt: String, correctCode: String, returnType: String, varSpecs: Seq[VariableSpec], numRuns: Int) extends ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean = {
+  def checkResponse(response: String): Boolean = {
     val funcType = s"(${varSpecs.map(_.typeName).mkString(", ")}) => $returnType"
     val args = varSpecs.map(_.name).mkString(", ")
     val code = s"""
@@ -130,43 +119,43 @@ case class WriteFunctionLiteral(prompt: String, correctCode: String, returnType:
         ${varSpecs.map(_.codeGenerator).mkString("\n")}
         if(f1($args) != f2($args)) sys.exit(1)
       }
-      tester(${response.text.head},$correctCode)
+      tester($response,$correctCode)
       """
     ProblemSpec.runCode(code, "", numRuns)
   }
 }
 
 case class WriteExpression(prompt: String, correctCode: String, varSpecs: Seq[VariableSpec], generalSetup: String, numRuns: Int) extends ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean = {
+  def checkResponse(response: String): Boolean = {
     val code = s"""
       ${varSpecs.map(_.codeGenerator).mkString("\n")}
       $generalSetup
-      if({${response.text.head}} != {$correctCode}) sys.exit(1)
+      if({$response} != {$correctCode}) sys.exit(1)
       """
     ProblemSpec.runCode(code, "", numRuns)
   }
 }
 
 case class IOCode(prompt: String) extends ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean = ???
+  def checkResponse(response: String): Boolean = ???
 }
 
 case class CodeCompletion(prompt: String, code: String, varSpecs: Seq[VariableSpec], numRuns: Int) extends ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean = ???
+  def checkResponse(response: String): Boolean = ???
 }
 
 case class CodeCompiles(prompt: String) extends ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean = ???
+  def checkResponse(response: String): Boolean = ???
 }
 
 case class RegExMatching(prompt: String) extends ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean = ???
+  def checkResponse(response: String): Boolean = ???
 }
 
 //case class CodeTracing(prompt:String) extends ProblemSpec {
 //}
 
 case class FileSubmission(prompt: String) extends ProblemSpec {
-  def checkResponse(response: ProblemResponse): Boolean = ???
+  def checkResponse(response: String): Boolean = ???
 
 }
