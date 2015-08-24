@@ -28,7 +28,8 @@ object AddTestData extends App {
       FunctionQuestions.delete,
       FunctionAssoc.delete,
       McAnswers.delete,
-      CodeAnswers.delete
+      CodeAnswers.delete,
+      VariableSpecifications.delete
     )), Duration.Inf)
     Await.result(db.run(DBIO.seq(
       sqlu"ALTER TABLE users AUTO_INCREMENT = 1;",
@@ -52,8 +53,9 @@ object AddTestData extends App {
       MultipleChoiceAssoc += MultipleChoiceAssocRow(Some(1),Some(2)),
       MultipleChoiceAssoc += MultipleChoiceAssocRow(Some(2),Some(3)),
       FunctionQuestions += FunctionQuestionsRow(0,"Function question 1","good code","foo",10),
-      FunctionQuestions += FunctionQuestionsRow(0,"Function question 2","good code","bar",10),
-      FunctionQuestions += FunctionQuestionsRow(0,"Function question 3","good code","fizz",10),
+      FunctionQuestions += FunctionQuestionsRow(0,"Write a function called bar() that returns 42.","def bar() = 42","bar",10),
+      FunctionQuestions += FunctionQuestionsRow(0,"Write a factorial function called fact.","def fact(n:Int) = (1 to n).product","fact",10),
+      VariableSpecifications += VariableSpecificationsRow(3,1,0,0,"n",Some(0),Some(10)),
       FunctionAssoc += FunctionAssocRow(Some(1),Some(1)),
       FunctionAssoc += FunctionAssocRow(Some(2),Some(2)),
       FunctionAssoc += FunctionAssocRow(Some(2),Some(3)),

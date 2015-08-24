@@ -1,9 +1,12 @@
-@(title: String, showLogout: Boolean)(content: Html)
+@(title: String, showLogout: Boolean)(content: Html)(implicit flash:Flash)
 
 <!DOCTYPE html>
 
 <html lang="en">
     <head>
+    	@if(flash.get("refresh-delay").nonEmpty) {
+			<meta http-equiv="refresh" content="@{flash("refresh-delay")}">
+    	}
         <title>@title</title>
         <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
         <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
@@ -23,6 +26,11 @@
     <body>
     	@if(showLogout) {
     		<p><a href="@routes.Application.logout">Logout</a></p>
+    	}
+    	@if(flash.get("refresh-delay").nonEmpty) {
+			<p>Page will refresh in @{flash("refresh-delay")} seconds to show your score. It could take up to 30 seconds
+			for broken code to complete. You can manually refresh or go look at the quiz if the scores aren't updated
+			in time for the automatic refresh.</p>
     	}
         @content
     </body>

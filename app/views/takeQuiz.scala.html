@@ -1,5 +1,5 @@
 @* takeQuiz Template File *@
-@(quiz:QuizData)
+@(quiz:QuizData)(implicit flash:Flash)
 
 @main("Take " + quiz.name, true) {
 	<h2>Take Quiz - @quiz.name</h2>

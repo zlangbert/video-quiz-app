@@ -22,11 +22,11 @@ class Application extends Controller {
       "username" -> nonEmptyText,
       "trinityid" -> nonEmptyText)((un, id) => UsersRow(0, un, id))(u => Some(u.username -> u.trinityid)))
 
-  def index = Action(request => {
+  def index = Action(implicit request => {
     Ok(views.html.mainMenu(userForm))
   })
 
-  def quizList = AuthenticatedAction(request => {
+  def quizList = AuthenticatedAction(implicit request => {
     val uname = request.session.get("username").getOrElse("No name")
     val uid = request.session.get("userid").getOrElse("-1").toInt
     val db = dbConfig.db
@@ -52,17 +52,17 @@ class Application extends Controller {
     quizzes.map(qs => Ok(views.html.quizList(qs)))
   })
   
-  def viewQuiz(quizid:Int) = AuthenticatedAction { request => {
+  def viewQuiz(quizid:Int) = AuthenticatedAction { implicit request => {
     val quizData = Queries.quizData(quizid,request.session.get("userid").getOrElse("-1").toInt, dbConfig.db)
     quizData.map(qd => Ok(views.html.viewQuiz(qd)))
   } }
 
-  def takeQuiz(quizid:Int) = AuthenticatedAction { request => {
+  def takeQuiz(quizid:Int) = AuthenticatedAction { implicit request => {
     val quizData = Queries.quizData(quizid,request.session.get("userid").getOrElse("-1").toInt, dbConfig.db)
     quizData.map(qd => Ok(views.html.takeQuiz(qd)))
   } }
   
-  def submitQuiz = AuthenticatedAction { request => {
+  def submitQuiz = AuthenticatedAction { implicit request => {
     val db = dbConfig.db
     val userid = request.session("userid").toInt
     request.body.asFormUrlEncoded match {
@@ -84,10 +84,10 @@ class Application extends Controller {
         }
       case None =>
     }
-    Future(Redirect(routes.Application.quizList()))
+    Future(Redirect(routes.Application.quizList()).flashing("refresh-delay" -> "5"))
   } }
 
-  def fetch(user: String) = AuthenticatedAction { request =>
+  def fetch(user: String) = AuthenticatedAction { implicit request =>
     Queries.fetchUserByName(user, dbConfig.db).map(user => Ok(Queries.coursesFor(user.userid, dbConfig.db).toString()))
   }
 
