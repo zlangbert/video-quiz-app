@@ -39,9 +39,11 @@ object AddTestData extends App {
       sqlu"ALTER TABLE function_questions AUTO_INCREMENT = 1;"
     )), Duration.Inf)
     Await.result(db.run(DBIO.seq(
+      Users += UsersRow(0,"mlewist","0123456"),
       Users += UsersRow(0,"mlewis","0123456"),
       Courses += CoursesRow(0,"CSCI1302","F15",6),
-      UserCourseAssoc += UserCourseAssocRow(Some(1),Some(1),2),
+      UserCourseAssoc += UserCourseAssocRow(Some(1),Some(1),Queries.Student),
+      UserCourseAssoc += UserCourseAssocRow(Some(2),Some(1),Queries.Instructor),
       Quizzes += QuizzesRow(0, "Quiz #1", "A test quiz."),
       Quizzes += QuizzesRow(0, "Quiz #2", "A test quiz."),
       QuizCourseCloseAssoc += QuizCourseCloseAssocRow(Some(2),Some(1),Timestamp.valueOf("2015-12-12 12:12:12")),

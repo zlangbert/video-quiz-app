@@ -1,0 +1,12 @@
+@* multipleChoiceDisplay Template File *@
+@(spec:MultipleChoice)
+
+<p>
+Prompt: @spec.prompt<br>
+<ol>
+	@for(opt <- spec.options) {
+		<li>@opt</li>
+	}
+</ol>
+Correct option: @spec.correct
+</p>

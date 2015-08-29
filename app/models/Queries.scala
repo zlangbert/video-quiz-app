@@ -13,6 +13,34 @@ import Tables._
  * @author mlewis
  */
 object Queries {
+  def main(args:Array[String]) {
+    val StudentRegex = """(\d{7})|(\w{2,8})@trinity\.edu""".r
+    val text = """Contact Us
+Ajani, Aroosa
+0786336
+aajani@trinity.edu
+Sophomore
+UG
+New
+3.00
+Blanke, Benjamin P.
+0785682
+bblanke@trinity.edu
+Sophomore
+UG
+New
+3.00
+"""
+    val d = (for(StudentRegex(id,uname) <- text.split("\n")) yield {
+      (id,uname)
+    }).dropWhile(_._1 == null)
+    val d2 = for(((a,null),(null,d)) <- d.zip(d.tail)) yield (a,d)
+    d2 foreach println
+  }
+  
+  val Student = 1
+  val Instructor = 2
+  
   // Courses
   def coursesFor(userid: Int, db: Database): Future[Seq[CoursesRow]] = {
     db.run {
@@ -24,6 +52,52 @@ object Queries {
       } yield c).result.map(_.distinct)
     }
   }
+  
+  def addCourse(ncd:NewCourseData, userid:Int, db: Database):Unit = {
+    val StudentRegex = """(\d{7})|(\w{2,8})@trinity\.edu""".r
+    // Create course entry
+    db.run(Courses += CoursesRow(0,ncd.code,ncd.semester,ncd.section)).foreach { cnt =>
+      if(cnt>0) {
+        db.run(Courses.filter(cr => cr.code === ncd.code && cr.semester === ncd.semester && cr.section === ncd.section).result.head).foreach(cr => {
+          // Add current user as instructor
+          db.run(UserCourseAssoc += UserCourseAssocRow(Some(userid),Some(cr.courseid),Instructor))
+          // Parse instructors and add associations
+          val instructors = ncd.instructorNames.split("\\s+").filter(_.trim.nonEmpty)
+          instructors.foreach(i => {
+            db.run(Users.filter(u => u.username === i).result).foreach { matches => {
+              if(matches.isEmpty) println("Attempt to add non-existant instructor: "+i)
+              else db.run( UserCourseAssoc += UserCourseAssocRow(Some(matches.head.userid),Some(cr.courseid),Instructor) )
+            } }
+          })
+          // Parse students and add associations
+          ncd.studentData.split("\n").foreach(l => println("Line = "+l))
+          val d = (for(StudentRegex(id,uname) <- ncd.studentData.split("\n").map(_.trim)) yield {
+            println("Matching "+id+", "+uname)
+            (id,uname)
+          }).dropWhile(_._1 == null)
+          d foreach println
+          if(d.length>1) {
+            val userTuples = for(((a,null),(null,d)) <- d.zip(d.tail)) yield (a,d)
+            userTuples foreach println
+            for((id,uname) <- userTuples) {
+              db.run(Users.filter(u => u.username === uname).result).foreach { matches => {
+                if(matches.isEmpty) {
+                  db.run( Users += UsersRow(0,uname,id) ).foreach(_ =>
+                    db.run(Users.filter(u => u.username === uname).result).foreach { newUser =>
+                      db.run( UserCourseAssoc += UserCourseAssocRow(Some(newUser.head.userid),Some(cr.courseid),Student) )
+                    })
+                } else {
+                  db.run( UserCourseAssoc += UserCourseAssocRow(Some(matches.head.userid),Some(cr.courseid),Student) )
+                }
+              } }
+            }
+          }
+        })
+      } else {
+        println("cnt was "+cnt+" on insert of course")
+      }
+    }
+  }
 
   // Users
   def validLogin(user: UsersRow, db: Database): Future[Int] = {
@@ -33,6 +107,21 @@ object Queries {
 
   def fetchUserByName(username: String, db: Database): Future[UsersRow] = {
     db.run { Users.filter(u => u.username === username).result.head }
+  }
+  
+  def instructorCourseIds(userid:Int, db:Database): Future[Seq[Option[Int]]] = {
+    db.run(UserCourseAssoc.filter(uca => uca.userid === userid && uca.role === Instructor).map(_.courseid).result)
+  }
+
+  def instructorCourseRows(userid:Int, db:Database): Future[Seq[CoursesRow]] = {
+    db.run {
+      (for {
+        (ucar,cr) <- UserCourseAssoc join Courses on (_.courseid === _.courseid)
+        if ucar.userid === userid && ucar.role === Instructor
+      } yield {
+        cr
+      }).result
+    }
   }
 
   // Quizzes
@@ -188,5 +277,34 @@ object Queries {
       mc <- mcQuestions
       cq <- codeQuestions
     } yield QuizData(quizid,userid,qr.name,qr.description,mc,cq)
+  }
+  
+  def quizSpecs(quizid:Int, db:Database): Future[Seq[ProblemSpec]] = {
+    val mcQuestions = db.run(MultipleChoiceAssoc.filter(_.quizid === quizid).result).flatMap(f => Future.sequence(f.map(mca => {
+      db.run(MultipleChoiceQuestions.filter(_.mcQuestionId === mca.mcQuestionId).result)
+    })))
+    val mcSpecs = mcQuestions.flatMap(mcqSeq => Future.sequence(mcqSeq.flatten.map(mcq => 
+      ProblemSpec(ProblemSpec.MultipleChoiceType,mcq.mcQuestionId,db))))
+    val funcQuestions = db.run(FunctionAssoc.filter(_.quizid === quizid).result).flatMap(f => Future.sequence(f.map(fa => {
+      db.run(FunctionQuestions.filter(_.funcQuestionId === fa.funcQuestionId).result)
+    })))
+    val funcSpecs = funcQuestions.flatMap(fqSeq => Future.sequence(fqSeq.flatten.map(fq => 
+      ProblemSpec(ProblemSpec.FunctionType,fq.funcQuestionId,db))))
+    val lambdaQuestions = db.run(LambdaAssoc.filter(_.quizid === quizid).result).flatMap(f => Future.sequence(f.map(la => {
+      db.run(LambdaQuestions.filter(_.lambdaQuestionId === la.lambdaQuestionId).result)
+    })))
+    val lambdaSpecs = lambdaQuestions.flatMap(lqSeq => Future.sequence(lqSeq.flatten.map(lq => 
+      ProblemSpec(ProblemSpec.LambdaType,lq.lambdaQuestionId,db))))
+    val exprQuestions = db.run(ExpressionAssoc.filter(_.quizid === quizid).result).flatMap(f => Future.sequence(f.map(ea => {
+      db.run(ExpressionQuestions.filter(_.exprQuestionId === ea.exprQuestionId).result)
+    })))
+    val exprSpecs = exprQuestions.flatMap(eqSeq => Future.sequence(eqSeq.flatten.map(eq => 
+      ProblemSpec(ProblemSpec.ExpressionType,eq.exprQuestionId,db))))
+    for {
+        mcqs <- mcSpecs
+        fqs <- funcSpecs
+        lqs <- lambdaSpecs
+        eqs <- exprSpecs
+    } yield { mcqs ++ fqs ++ lqs ++ eqs }
   }
 }

@@ -1,0 +1,51 @@
+@* editQuiz Template File *@
+@(quizRow:Tables.QuizzesRow, taken:Boolean, probInfo:Seq[ProblemSpec])(implicit flash:Flash)
+
+@main((if(quizRow.quizid<1) "Create" else "Edit")+"Quiz", true) {
+	<h2>@{if(quizRow.quizid<1) "Create" else "Edit"}Quiz</h2>
+	<hr>
+	@if(taken) {
+		<p>This quiz has been taken by one or more students and can no longer be edited. Here is a display of the quiz.</p>
+		<p>Name: @quizRow.name</p>
+		<p>Description: @quizRow.description</p>
+		@for(pr <- probInfo) {
+			<hr>
+			@{pr match {
+				case mc:MultipleChoice => multipleChoiceDisplay(mc)
+				case wf:WriteFunction =>
+				case wl:WriteLambda =>
+				case we:WriteExpression =>
+			} }
+		}
+	} else {
+		<form method="post" action="editQuizPost">
+			<input type="hidden" name="quizid" id="quizid" value="@quizRow.quizid"/><br>
+			<input type="text" name="name" id="name" placeholder="Quiz Name" @if(quizRow.quizid>0) { value="@quizRow.name" }/><br>
+			<textarea name="description" id="description" placeholder="Description">@if(quizRow.quizid>0) {@quizRow.description}</textarea><br>
+			@* Consider adding a delete option if not creating*@
+			@for(pr <- probInfo) {
+				<hr>
+				@{pr match {
+					case mc:MultipleChoice => multipleChoiceEdit(mc)
+					case wf:WriteFunction => writeFunctionEdit(wf)
+					case wl:WriteLambda => writeLambdaEdit(wl)
+					case we:WriteExpression => writeExpressionEdit(we)
+				} }
+			}
+			<br>
+			<button id="addQuestion">Done</button>
+			<hr>
+			<input type="submit"/>
+			<a href="@routes.Application.quizList">Cancel</a>
+		</form>
+	}
+}
+
+@*
+ - prevent edits if it has been taken, display instead
+ - display name and description in text fields
+ - display questions already there
+ - add question buttons in JavaScript
+   - add inputs/textareas to form
+   - give them names based on type and what number they are
+*@

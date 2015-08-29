@@ -1,0 +1,30 @@
+@* writeExpressionEdit Template File *@
+@(spec:WriteExpression)
+<p>
+Prompt:<br>
+<textarea name="exprPromt-@spec.id" id="exprPrompt-@spec.id">@spec.prompt</textarea><br>
+
+Correct Code: <br>
+<textarea name="funcCode-@spec.id" id="funcCode-@spec.id">@spec.correctCode</textarea><br>
+
+Variable Specs: <br>
+<ul>
+	@for((vs,specIndex) <- spec.varSpecs.zipWithIndex) {
+		<li>
+			@{vs match {
+				case is:IntSpec => intSpecEdit(is, spec.id, ProblemSpec.FunctionType, specIndex)
+				case ds:DoubleSpec => doubleSpecEdit(ds, spec.id, ProblemSpec.FunctionType, specIndex)
+				case ss:StringSpec => stringSpecEdit(ss, spec.id, ProblemSpec.FunctionType, specIndex)
+				case lis:ListIntSpec => listIntSpecEdit(lis, spec.id, ProblemSpec.FunctionType, specIndex)
+				case ais:ArrayIntSpec => arrayIntSpecEdit(ais, spec.id, ProblemSpec.FunctionType, specIndex)
+				case lss:ListStringSpec => listStringSpecEdit(lss, spec.id, ProblemSpec.FunctionType, specIndex)
+			}}
+		</li>
+	}
+</ul><br>
+
+General Setup: <br>
+<textarea type="text" name="exprName-@spec.id" id="exprName-@spec.id">@spec.generalSetup</textarea><br>
+
+Number of Test Runs: <input type="text" name="funcRuns-@spec.id" id="funcRuns-@spec.id" value="@spec.numRuns"/>
+</p>

@@ -15,7 +15,23 @@ GET		/viewQuiz					controllers.Application.viewQuiz(quizid:Int)
 
 GET		/takeQuiz					controllers.Application.takeQuiz(quizid:Int)
 
+GET		/instructorPage				controllers.Application.instructorPage
+
+GET		/editQuiz					controllers.Application.editQuiz(quizid: Int)
+
+GET		/addCourse					controllers.Application.addCourse
+
+GET		/viewCourse					controllers.Application.viewCourse(courseid: Int)
+
 POST	/submitQuiz					controllers.Application.submitQuiz
+
+POST	/addCoursePost				controllers.Application.addCoursePost
+
+POST	/editQuizPost				controllers.Application.editQuizPost
+
+PUT		/associateQuiz				controllers.Application.associateQuizWithCourse(quizid:Int, courseid:Int, closingTime:String)
+
+PUT		/createUser					controllers.Application.createUser(username:String, userid:String)
 
 GET		/fetch/:user				controllers.Application.fetch(user)
 

@@ -6,8 +6,8 @@
 @main("Main Menu", false) {
 	<p>Login</p>
 	@helper.form(action = routes.Application.verifyLogin) {
-		@helper.inputText(userForm("username"))
-		@helper.inputPassword(userForm("trinityid"))
+		@helper.inputText(userForm("Username"))
+		@helper.inputPassword(userForm("Trinity ID"))
 		<div class='form-actions'>
 			<button type='submit'>Login</button>
 		</div>

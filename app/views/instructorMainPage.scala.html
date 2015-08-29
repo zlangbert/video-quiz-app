@@ -1,0 +1,57 @@
+@* instructorMainPage Template File *@
+@(courseInfo:Seq[Tables.CoursesRow], quizInfo:Seq[Tables.QuizzesRow])(implicit flash:Flash)
+
+@main("Instructor Options", true) {
+	<h2>Instructor Options</h2>
+	<hr>
+	<h3>Users</h3>
+	<p>
+		Create User
+		<input type="text" maxlength="8" placeholder="username" id="newUserName"/>
+		<input type="text" maxlength="7" placeholder="id#" id="newUserId"/>
+		<button onclick="">Create</button>
+	</p>
+	<hr>
+	<h3>Courses</h3>
+	<p><a href="@routes.Application.addCourse">Create Course</a></p>
+	<table border="1">
+		<tr><th>Course</th></tr>
+		@for(cr <- courseInfo) {
+			<tr><td><a href="@routes.Application.viewCourse(cr.courseid)">@cr.code-@cr.section-@cr.semester</a></td></tr>
+		}
+	</table>
+	<hr>
+	<h3>Quizzes</h3>
+	<p><a href="@routes.Application.editQuiz(-1)">Create Quiz</a></p>
+	<table border="1">
+		<tr><th>Quiz Name</th><th>Description</th><th>Add to Course</th></tr>
+		@for(qr <- quizInfo) {
+			<tr>
+			  	<td><a href="@routes.Application.editQuiz(qr.quizid)">@qr.name</a></td>
+			  	<td>@qr.description</td>
+			  	<td>
+			  		<select id="qr-sel-@qr.quizid" name="qr-sel-@qr.quizid">
+			  			@for(cr <- courseInfo) {
+			  				<option value="qr-sel-@qr.quizid-@cr.courseid">@cr.code-@cr.section-@cr.semester</option>
+			  			}
+			  		</select>
+					<input type="datetime-local" name="qr-datetime-@qr.quizid" id="qr-datetime-@qr.quizid">
+					<button onclick="???">Add</button>
+			  	</td>
+			</tr>
+		}
+	</table>
+	<p>Note that the date/time selection in this table does not work under Firefox or IE.</p>
+}
+
+@*
+Options for instructors
+
+*Edit Quiz
+ - prevent edits if it has been taken, display instead
+ - display name and description in text fields
+ - display questions already there
+ - add question buttons in JavaScript
+   - add inputs/textareas to form
+   - give them names based on type and what number they are
+*@

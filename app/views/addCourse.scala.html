@@ -1,0 +1,32 @@
+@* addCourse Template File *@
+@(newCourseForm:Form[NewCourseData])(implicit flash:Flash)
+
+@import play.api.Play.current
+@import play.api.i18n.Messages.Implicits._
+
+@main("Create New Course", true) {
+	@helper.form(action = routes.Application.addCoursePost) {
+		@helper.inputText(newCourseForm("Course Code"))
+		<p>e.g. CSCI1320</p>
+		@helper.inputText(newCourseForm("Section"))
+		@helper.inputText(newCourseForm("Semester"))
+		<p>e.g. F15</p>
+		@helper.textarea(newCourseForm("Instructor Names"))
+		<p>Current user is already included. Only specify other users who should have instructor access.</p>
+		@helper.textarea(newCourseForm("Student Data"))
+		<p>Copy the class roster without photos from TigerPaws. Make sure every student's line includes
+		their ID and their email address. Existing students will get their existing accounts.</p>
+		<div class='form-actions'>
+			<button type='submit'>Create</button>
+		</div>
+	}
+	<a href="@routes.Application.instructorPage">Cancel</a>
+}
+
+@*
+"code" -> nonEmptyText(7,8),
+      "semester" -> nonEmptyText(3,3),
+      "section" -> number(0,100),
+      "instructorNames" -> text,
+      "studentData" -> nonEmptyText)
+*@

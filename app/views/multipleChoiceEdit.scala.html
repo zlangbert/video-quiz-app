@@ -1,0 +1,12 @@
+@* multipleChoiceEdit Template File *@
+@(spec:MultipleChoice)
+<p>
+Prompt: <input type="text" name="mcPromt-@spec.id" id="mcPrompt-@spec.id" value="@spec.prompt"/><br>
+<ol>
+	@for((opt,index) <- spec.options.zipWithIndex) {
+		<li><input type="text" name="mcOpt-@spec.id-@index" id="mcOpt-@spec.id-@index" value="@opt" placeholder="Option" onfocusout=""/></li>
+	}
+	<li><input type="text" name="mcOpt-@spec.id-@spec.options.length" id="mcOpt-@spec.id-@spec.options.length" value="" placeholder="Option" onfocusout=""/></li>
+</ol>
+Correct option: <input type="text" name="mcCorrect-@spec.id" id="mcCorrect-@spec.id" value="@spec.correct" placeholder="Correct value"/>
+</p>
