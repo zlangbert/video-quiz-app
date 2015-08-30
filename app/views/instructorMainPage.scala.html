@@ -14,7 +14,7 @@
 		Create User
 		<input type="text" maxlength="8" placeholder="username" id="newUserName"/>
 		<input type="text" maxlength="7" placeholder="id#" id="newUserId"/>
-		<button onclick="">Create</button>
+		<button onclick="createUser()">Create</button>
 	</p>
 	<hr>
 	<h3>Courses</h3>
@@ -37,11 +37,11 @@
 			  	<td>
 			  		<select id="qr-sel-@qr.quizid" name="qr-sel-@qr.quizid">
 			  			@for(cr <- courseInfo) {
-			  				<option value="qr-sel-@qr.quizid-@cr.courseid">@cr.code-@cr.section-@cr.semester</option>
+			  				<option value="@cr.courseid">@cr.code-@cr.section-@cr.semester</option>
 			  			}
 			  		</select>
 					<input type="datetime-local" name="qr-datetime-@qr.quizid" id="qr-datetime-@qr.quizid">
-					<button onclick="???">Add</button>
+					<button onclick="associateQuizWithCourse(@qr.quizid)">Add</button>
 			  	</td>
 			</tr>
 		}

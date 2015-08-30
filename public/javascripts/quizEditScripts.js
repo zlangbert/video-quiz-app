@@ -45,10 +45,55 @@ function associateMCWithQuiz(mcid) {
 	var quizid = quizSelect.val();
 	var request = $.ajax({
 		method: "PUT",
-		url: "assocMCWithQuiz?questionid="+mcid+"&quizid="+quizid,
+		url: "addMCToQuiz?questionid="+mcid+"&quizid="+quizid
 	});
 	request.done(function () {
 		alert("Association made.");
+	});
+	request.fail(function( jqXHR, textStatus ) {
+		alert( "Request failed: " + textStatus );
+	});
+}
+
+function removeQuestionQuizAssoc(questionid, questionType, quizid,index) {
+	$("#prob-"+index).remove();
+	var request = $.ajax({
+		method: "DELETE",
+		url: "removeQuestionFromQuiz?questionid="+questionid+"&questionType="+questionType+"&quizid="+quizid
+	});
+	request.done(function () {
+		alert("Association removed.");
+	});
+	request.fail(function( jqXHR, textStatus ) {
+		alert( "Request failed: " + textStatus );
+	});
+}
+
+function associateQuizWithCourse(quizid) {
+	var courseSelect = $("#qr-sel-"+quizid);
+	var courseid = courseSelect.val();
+	var dateTime = $("#qr-datetime-"+quizid).val();
+	var request = $.ajax({
+		method: "PUT",
+		url: "addQuizToCourse?quizid="+quizid+"&courseid="+courseid+"&dateTime="+dateTime
+	});
+	request.done(function () {
+		alert("Association made.");
+	});
+	request.fail(function( jqXHR, textStatus ) {
+		alert( "Request failed: " + textStatus );
+	});
+}
+
+function createUser() {
+	var username = $("#newUserName").val();
+	var userid = $("#newUserId").val();
+	var request = $.ajax({
+		method: "PUT",
+		url: "createUser?username="+username+"&id="+userid
+	});
+	request.done(function () {
+		alert("User made.");
 	});
 	request.fail(function( jqXHR, textStatus ) {
 		alert( "Request failed: " + textStatus );

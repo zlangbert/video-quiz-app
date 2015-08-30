@@ -9,39 +9,28 @@ Simplify down to listing questions and allowing them to be removed from the quiz
 	<hr>
 	@if(taken) {
 		<p>This quiz has been taken by one or more students and can no longer be edited. Here is a display of the quiz.</p>
-		<p>Name: @quizRow.name</p>
-		<p>Description: @quizRow.description</p>
-		@for(pr <- probInfo) {
-			<hr>
-			@{pr match {
-				case mc:MultipleChoice => multipleChoiceDisplay(mc)
-				case wf:WriteFunction =>
-				case wl:WriteLambda =>
-				case we:WriteExpression =>
-			} }
-		}
-	} else {
-		<form method="post" action="editQuizPost">
-			<input type="hidden" name="quizid" id="quizid" value="@quizRow.quizid"/><br>
-			<input type="text" name="name" id="name" placeholder="Quiz Name" @if(quizRow.quizid>0) { value="@quizRow.name" }/><br>
-			<textarea name="description" id="description" placeholder="Description">@if(quizRow.quizid>0) {@quizRow.description}</textarea><br>
-			@* Consider adding a delete option if not creating*@
-			@for(pr <- probInfo) {
-				<hr>
-				@{pr match {
-					case mc:MultipleChoice => multipleChoiceEdit(mc)
-					case wf:WriteFunction => writeFunctionEdit(wf)
-					case wl:WriteLambda => writeLambdaEdit(wl)
-					case we:WriteExpression => writeExpressionEdit(we)
-				} }
-			}
-			<br>
-			<button id="addQuestion">Done</button>
-			<hr>
-			<input type="submit"/>
-			<a href="@routes.Application.instructorPage">Cancel</a>
-		</form>
 	}
+	<form method="POST" action="editQuizPost">
+	<input type="hidden" name="quizid" id="quizid" value="@quizRow.quizid"/>
+	<p>Name: <input type="text" name="name" id="name" value="@quizRow.name" placeholder="Name"/></p>
+	<p>Description: <textarea name="description" id="description" placeholder="Description">@quizRow.description</textarea></p>
+	@for((pr,index) <- probInfo.zipWithIndex) {
+		<div id="prob-@index">
+		<hr>
+		@{pr match {
+			case mc:MultipleChoice => multipleChoiceDisplay(mc)
+			case wf:WriteFunction =>
+			case wl:WriteLambda =>
+			case we:WriteExpression =>
+		} }
+		<br>
+		<button type="button" onclick="removeQuestionQuizAssoc(@pr.id,@pr.typeValue,@quizRow.quizid,@index)">Remove</button>
+		</div>
+	}
+	<hr>
+	<input type="submit" value="Submit"/>
+	<a href="@routes.Application.instructorPage">Cancel Text Changes</a>
+	</form>
 }
 
 @*

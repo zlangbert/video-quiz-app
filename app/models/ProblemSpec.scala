@@ -99,6 +99,8 @@ sys.exit(0)
 
 sealed trait ProblemSpec {
   def checkResponse(response: String): Boolean
+  val id:Int
+  val typeValue:Int
   val prompt: String
 }
 
@@ -110,6 +112,7 @@ case class MultipleChoice(id: Int, prompt: String, options: Seq[String], correct
       case e: NumberFormatException => false
     }
   }
+  val typeValue = ProblemSpec.MultipleChoiceType
 }
 
 case class WriteFunction(id: Int, prompt: String, correctCode: String, functionName: String, varSpecs: Seq[VariableSpec], numRuns: Int) extends ProblemSpec {
@@ -124,6 +127,7 @@ case class WriteFunction(id: Int, prompt: String, correctCode: String, functionN
       """
     ProblemSpec.runCode(code, "", numRuns)
   }
+  val typeValue = ProblemSpec.FunctionType
 }
 
 case class WriteLambda(id: Int, prompt: String, correctCode: String, returnType: String, varSpecs: Seq[VariableSpec], numRuns: Int) extends ProblemSpec {
@@ -139,6 +143,7 @@ case class WriteLambda(id: Int, prompt: String, correctCode: String, returnType:
       """
     ProblemSpec.runCode(code, "", numRuns)
   }
+  val typeValue = ProblemSpec.LambdaType
 }
 
 case class WriteExpression(id: Int, prompt: String, correctCode: String, varSpecs: Seq[VariableSpec], generalSetup: String, numRuns: Int) extends ProblemSpec {
@@ -150,6 +155,7 @@ case class WriteExpression(id: Int, prompt: String, correctCode: String, varSpec
       """
     ProblemSpec.runCode(code, "", numRuns)
   }
+  val typeValue = ProblemSpec.ExpressionType
 }
 /*
 case class IOCode(prompt: String) extends ProblemSpec {
