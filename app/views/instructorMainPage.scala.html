@@ -1,5 +1,10 @@
 @* instructorMainPage Template File *@
-@(courseInfo:Seq[Tables.CoursesRow], quizInfo:Seq[Tables.QuizzesRow])(implicit flash:Flash)
+@(courseInfo:Seq[Tables.CoursesRow], quizInfo:Seq[Tables.QuizzesRow],
+	mcQuestions:Seq[Tables.MultipleChoiceQuestionsRow],
+	funcQuestions:Seq[Tables.FunctionQuestionsRow],
+	lambdaQuestions:Seq[Tables.LambdaQuestionsRow],
+	exprQuestions:Seq[Tables.ExpressionQuestionsRow]
+)(implicit flash:Flash)
 
 @main("Instructor Options", true) {
 	<h2>Instructor Options</h2>
@@ -42,6 +47,56 @@
 		}
 	</table>
 	<p>Note that the date/time selection in this table does not work under Firefox or IE.</p>
+	<hr>
+	<h3>Questions</h3>	
+	<p><a href="@routes.Application.multipleChoiceEdit(-1)">Create Multiple Choice Question</a></p>
+	<table border="1">
+		<tr><th>Multiple Choice</th><th>Add to Quiz</th></tr>
+		@for(q <- mcQuestions) {
+			<tr>
+				<td><a href="@routes.Application.multipleChoiceEdit(q.mcQuestionId)">@q.prompt</a></td>
+				<td>
+					<select id="quiz-mc-@q.mcQuestionId">
+						@for(quiz <- quizInfo) {
+							<option value="@quiz.quizid">@quiz.name</option>
+						}
+					</select>
+					<button type="button" onclick="associateMCWithQuiz(@q.mcQuestionId)">Add</button>
+				</td>
+			</tr>
+		}
+	</table>
+	<hr>
+	<p><a href="@routes.Application.writeFunctionEdit(-1)">Create Function Writing Question</a></p>
+	<table border="1">
+		<tr><th>Write Function</th><th>Add to Quiz</th></tr>
+		@for(q <- funcQuestions) {
+			<tr>
+				<td><a href="@routes.Application.writeFunctionEdit(q.funcQuestionId)">@q.prompt</a></td>
+			</tr>
+		}
+	</table>
+	<hr>
+	<p><a href="@routes.Application.writeLambdaEdit(-1)">Create Lambda Writing Question</a></p>
+	<table border="1">
+		<tr><th>Write Lambda</th><th>Add to Quiz</th></tr>
+		@for(q <- lambdaQuestions) {
+			<tr>
+				<td><a href="@routes.Application.writeLambdaEdit(q.lambdaQuestionId)">@q.prompt</a></td>
+			</tr>
+		}
+	</table>
+	<hr>
+	<p><a href="@routes.Application.writeExpressionEdit(-1)">Create Expression Writing Question</a></p>
+	<table border="1">
+		<tr><th>Write Expression</th><th>Add to Quiz</th></tr>
+		@for(q <- exprQuestions) {
+			<tr>
+				<td><a href="@routes.Application.writeExpressionEdit(q.exprQuestionId)">@q.prompt</a></td>
+			</tr>
+		}
+	</table>
+	
 }
 
 @*

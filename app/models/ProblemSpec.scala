@@ -17,36 +17,52 @@ object ProblemSpec {
   val LambdaType = 2
   val ExpressionType = 3
 
+  def multipleChoice(id: Int, db: Database): Future[MultipleChoice] = {
+    val mcRow = db.run(MultipleChoiceQuestions.filter(_.mcQuestionId === id).result.head)
+    mcRow.map(row => {
+      val options = Seq(row.option1, row.option2) ++ Seq(row.option3, row.option4, row.option5, row.option6,
+        row.option7, row.option8).filter(_.nonEmpty).map(_.get)
+      MultipleChoice(row.mcQuestionId, row.prompt, options, row.correctOption)
+    })
+  }
+
+  def writeFunction(id: Int, db: Database): Future[WriteFunction] = {
+    val funcRow = db.run(FunctionQuestions.filter(_.funcQuestionId === id).result.head)
+    funcRow.flatMap(row => {
+      val specs = db.run(VariableSpecifications.filter(vs => vs.questionId === id && vs.questionType === FunctionType)
+        .sortBy(_.paramNumber).result).map(s => s.map(vs => VariableSpec(vs)))
+      specs.map(s => WriteFunction(row.funcQuestionId, row.prompt, row.correctCode, row.functionName, s, row.numRuns))
+    })
+  }
+
+  def writeLambda(id: Int, db: Database): Future[WriteLambda] = {
+    val lambdaRow = db.run(LambdaQuestions.filter(_.lambdaQuestionId === id).result.head)
+    lambdaRow.flatMap(row => {
+      val specs = db.run(VariableSpecifications.filter(vs => vs.questionId === id && vs.questionType === LambdaType)
+        .sortBy(_.paramNumber).result).map(s => s.map(vs => VariableSpec(vs)))
+      specs.map(s => WriteLambda(row.lambdaQuestionId, row.prompt, row.correctCode, row.returnType, s, row.numRuns))
+    })
+  }
+
+  def writeExpression(id: Int, db: Database): Future[WriteExpression] = {
+    val exprRow = db.run(ExpressionQuestions.filter(_.exprQuestionId === id).result.head)
+    exprRow.flatMap(row => {
+      val specs = db.run(VariableSpecifications.filter(vs => vs.questionId === id && vs.questionType === ExpressionType)
+        .sortBy(_.paramNumber).result).map(s => s.map(vs => VariableSpec(vs)))
+      specs.map(s => WriteExpression(row.exprQuestionId, row.prompt, row.correctCode, s, row.generalSetup, row.numRuns))
+    })
+  }
+
   def apply(questionType: Int, id: Int, db: Database): Future[ProblemSpec] = {
     questionType match {
       case MultipleChoiceType => // multiple choice
-        val mcRow = db.run(MultipleChoiceQuestions.filter(_.mcQuestionId === id).result.head)
-        mcRow.map(row => {
-          val options = Seq(row.option1, row.option2) ++ Seq(row.option3, row.option4, row.option5, row.option6,
-            row.option7, row.option8).filter(_.nonEmpty).map(_.get)
-          MultipleChoice(row.mcQuestionId, row.prompt, options, row.correctOption)
-        })
+        multipleChoice(id, db)
       case FunctionType => // function
-        val funcRow = db.run(FunctionQuestions.filter(_.funcQuestionId === id).result.head)
-        funcRow.flatMap(row => {
-          val specs = db.run(VariableSpecifications.filter(vs => vs.questionId === id && vs.questionType === FunctionType)
-            .sortBy(_.paramNumber).result).map(s => s.map(vs => VariableSpec(vs)))
-          specs.map(s => WriteFunction(row.funcQuestionId, row.prompt, row.correctCode, row.functionName, s, row.numRuns))
-        })
+        writeFunction(id, db)
       case LambdaType => // lambda
-        val lambdaRow = db.run(LambdaQuestions.filter(_.lambdaQuestionId === id).result.head)
-        lambdaRow.flatMap(row => {
-          val specs = db.run(VariableSpecifications.filter(vs => vs.questionId === id && vs.questionType === LambdaType)
-            .sortBy(_.paramNumber).result).map(s => s.map(vs => VariableSpec(vs)))
-          specs.map(s => WriteLambda(row.lambdaQuestionId, row.prompt, row.correctCode, row.returnType, s, row.numRuns))
-        })
+        writeLambda(id, db)
       case ExpressionType => // expression
-        val exprRow = db.run(ExpressionQuestions.filter(_.exprQuestionId === id).result.head)
-        exprRow.flatMap(row => {
-          val specs = db.run(VariableSpecifications.filter(vs => vs.questionId === id && vs.questionType === ExpressionType)
-            .sortBy(_.paramNumber).result).map(s => s.map(vs => VariableSpec(vs)))
-          specs.map(s => WriteExpression(row.exprQuestionId, row.prompt, row.correctCode, s, row.generalSetup, row.numRuns))
-        })
+        writeExpression(id, db)
     }
   }
 

@@ -10,9 +10,9 @@ Correct Code: <br>
 <textarea name="funcCode-@spec.id" id="funcCode-@spec.id">@spec.correctCode</textarea><br>
 
 Variable Specs: <br>
-<ul>
+<ul id="funcul-@spec.id">
 	@for((vs,specIndex) <- spec.varSpecs.zipWithIndex) {
-		<li>
+		<li id="funcil-@spec.id-@specIndex">
 			@{vs match {
 				case is:IntSpec => intSpecEdit(is, spec.id, ProblemSpec.FunctionType, specIndex)
 				case ds:DoubleSpec => doubleSpecEdit(ds, spec.id, ProblemSpec.FunctionType, specIndex)
@@ -21,9 +21,18 @@ Variable Specs: <br>
 				case ais:ArrayIntSpec => arrayIntSpecEdit(ais, spec.id, ProblemSpec.FunctionType, specIndex)
 				case lss:ListStringSpec => listStringSpecEdit(lss, spec.id, ProblemSpec.FunctionType, specIndex)
 			}}
+			<button type="button" onclick="removeSpec('func',@spec.id,@specIndex)">Remove</button>
 		</li>
 	}
 </ul><br>
+<select id="funcNewSpecType-@spec.id">
+	<option value="@VariableSpec.IntSpecType">Int</option>
+	<option value="@VariableSpec.DoubleSpecType">Double</option>
+	<option value="@VariableSpec.StringSpecType">String</option>
+	<option value="@VariableSpec.IntListSpecType">List[Int]</option>
+	<option value="@VariableSpec.IntArraySpecType">Array[Int]</option>
+	<option value="@VariableSpec.StringListSpecType">List[String]</option>
+</select> <button type="button" onclick="newSpecType('func',@spec.id)">Add</button> <br>
 
 Number of Test Runs: <input type="text" name="funcRuns-@spec.id" id="funcRuns-@spec.id" value="@spec.numRuns"/>
 </p>

@@ -19,6 +19,14 @@ GET		/instructorPage				controllers.Application.instructorPage
 
 GET		/editQuiz					controllers.Application.editQuiz(quizid: Int)
 
+GET		/multipleChoiceEdit			controllers.Application.multipleChoiceEdit(id: Int)
+
+GET		/functionEdit				controllers.Application.writeFunctionEdit(id: Int)
+
+GET		/lambdaEdit					controllers.Application.writeLambdaEdit(id: Int)
+
+GET		/expressionEdit				controllers.Application.writeExpressionEdit(id: Int)
+
 GET		/addCourse					controllers.Application.addCourse
 
 GET		/viewCourse					controllers.Application.viewCourse(courseid: Int)
@@ -29,9 +37,19 @@ POST	/addCoursePost				controllers.Application.addCoursePost
 
 POST	/editQuizPost				controllers.Application.editQuizPost
 
+POST	/multipleChoiceEditPost		controllers.Application.multipleChoiceEditPost
+
 PUT		/associateQuiz				controllers.Application.associateQuizWithCourse(quizid:Int, courseid:Int, closingTime:String)
 
 PUT		/createUser					controllers.Application.createUser(username:String, userid:String)
+
+PUT		/assocMCWithQuiz			controllers.Application.associateMCQuestionWithQuiz(questionid: Int, quizid: Int)
+
+PUT		/assocFuncWithQuiz			controllers.Application.associateFuncQuestionWithQuiz(questionid: Int, quizid: Int)
+
+PUT		/assocLambdaWithQuiz		controllers.Application.associateLambdaQuestionWithQuiz(questionid: Int, quizid: Int)
+
+PUT		/assocExprWithQuiz			controllers.Application.associateExprQuestionWithQuiz(questionid: Int, quizid: Int)
 
 GET		/fetch/:user				controllers.Application.fetch(user)
 

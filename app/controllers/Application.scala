@@ -84,7 +84,20 @@ class Application extends Controller {
     val db = dbConfig.db
     val courses = Queries.instructorCourseRows(request.session.get("userid").get.toInt, db)
     val quizzes = db.run(Quizzes.result)
-    courses.flatMap(ic => quizzes.map(q => Ok(views.html.instructorMainPage(ic, q))))
+    val mcQuestions = db.run(MultipleChoiceQuestions.result)
+    val funcQuestions = db.run(FunctionQuestions.result)
+    val lambdaQuestions = db.run(LambdaQuestions.result)
+    val exprQuestions = db.run(ExpressionQuestions.result)
+    for {
+      ic <- courses
+      q <- quizzes
+      mc <- mcQuestions
+      func <- funcQuestions
+      lambda <- lambdaQuestions
+      expr <- exprQuestions
+    } yield {
+      Ok(views.html.instructorMainPage(ic, q, mc, func, lambda, expr))
+    }
   }
 
   def logout = Action { implicit request =>
@@ -108,6 +121,22 @@ class Application extends Controller {
       } yield Ok(views.html.editQuiz(qr, mca.nonEmpty || ca.nonEmpty, specs))
     }
   }
+  
+  def multipleChoiceEdit(id:Int) = AuthenticatedInstructorAction { implicit requext =>
+    if(id<1) {
+      Future { Ok(views.html.multipleChoiceEdit(MultipleChoice(id,"",Nil,-1))) }
+    } else {
+      ProblemSpec.multipleChoice(id,dbConfig.db).map { ps =>
+        Ok(views.html.multipleChoiceEdit(ps))
+      }
+    }
+  }
+
+  def writeFunctionEdit(id:Int) = TODO
+
+  def writeLambdaEdit(id:Int) = TODO
+
+  def writeExpressionEdit(id:Int) = TODO
 
   def addCourse = AuthenticatedInstructorAction { implicit request =>
     Future { Ok(views.html.addCourse(newCourseForm)) }
@@ -181,13 +210,58 @@ class Application extends Controller {
     }
   }
 
-  def editQuizPost = TODO
+  def editQuizPost = AuthenticatedInstructorAction { implicit request =>
+      val db = dbConfig.db
+      val userid = request.session("userid").toInt
+      request.body.asFormUrlEncoded match {
+        case Some(params) =>
+          val quizid = params("quizid")(0).toInt
+          val keys = params.keySet
+          Future { Redirect(routes.Application.instructorPage).flashing("message" -> "Quiz saved.") }
+        case None =>
+          Future { Redirect(routes.Application.instructorPage).flashing("message" -> "Quiz not saved, no data.") }  
+      }
+  }
+  
+  def multipleChoiceEditPost = AuthenticatedInstructorAction { implicit request =>
+      val db = dbConfig.db
+      val userid = request.session("userid").toInt
+      request.body.asFormUrlEncoded match {
+        case Some(params) =>
+          val id = params("id")(0).toInt
+          val prompt = params("prompt")(0)
+          val opt1 = params("opt-0")(0)
+          val opt2 = params("opt-1")(0)
+          val opts = (2 to 7) map { i => val opt = params.get("opt-"+i); if(opt.isEmpty || opt.get(0).trim.isEmpty) None else opt.map(_(0)) }
+          val correct = params("correct")(0).toInt
+          if(id < 1) {
+            db.run(MultipleChoiceQuestions += MultipleChoiceQuestionsRow(id,prompt,opt1,opt2,opts(0),opts(1),opts(2),opts(3),opts(4),opts(5),correct))
+          } else {
+            db.run(MultipleChoiceQuestions.filter(_.mcQuestionId === id).update(MultipleChoiceQuestionsRow(id,prompt,opt1,opt2,opts(0),opts(1),opts(2),opts(3),opts(4),opts(5),correct)))
+          }
+          Future { Redirect(routes.Application.instructorPage).flashing("message" -> "Question saved.") }
+        case None =>
+          Future { Redirect(routes.Application.instructorPage).flashing("message" -> "Question not saved, no data.") }  
+      }
+  } 
 
   // AJAX Calls
 
   def associateQuizWithCourse(quizid:Int, courseid:Int, closingTime:String) = TODO
   
   def createUser(username:String, userid:String) = TODO
+  
+  def associateMCQuestionWithQuiz(questionid:Int, quizid:Int) = AuthenticatedInstructorAction { implicit request =>
+    println("Associate mc question "+questionid+" with "+quizid)
+    dbConfig.db.run(MultipleChoiceAssoc += MultipleChoiceAssocRow(Some(quizid),Some(questionid)))
+    Future { Ok("good") }
+  }
+
+  def associateFuncQuestionWithQuiz(questionid:Int, quizid:Int) = TODO
+
+  def associateLambdaQuestionWithQuiz(questionid:Int, quizid:Int) = TODO
+
+  def associateExprQuestionWithQuiz(questionid:Int, quizid:Int) = TODO
 
   // Other methods
 

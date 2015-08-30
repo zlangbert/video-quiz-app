@@ -1,12 +1,22 @@
 @* multipleChoiceEdit Template File *@
-@(spec:MultipleChoice)
-<p>
-Prompt: <input type="text" name="mcPromt-@spec.id" id="mcPrompt-@spec.id" value="@spec.prompt"/><br>
-<ol>
-	@for((opt,index) <- spec.options.zipWithIndex) {
-		<li><input type="text" name="mcOpt-@spec.id-@index" id="mcOpt-@spec.id-@index" value="@opt" placeholder="Option" onfocusout=""/></li>
-	}
-	<li><input type="text" name="mcOpt-@spec.id-@spec.options.length" id="mcOpt-@spec.id-@spec.options.length" value="" placeholder="Option" onfocusout=""/></li>
-</ol>
-Correct option: <input type="text" name="mcCorrect-@spec.id" id="mcCorrect-@spec.id" value="@spec.correct" placeholder="Correct value"/>
-</p>
+@(spec:MultipleChoice)(implicit flash:Flash)
+
+@main((if(spec.id<1) "Create" else "Edit")+"Multiple Choice", true) {
+	<h2>@{if(spec.id<1) "Create" else "Edit"}Multiple Choice</h2>
+	<p>
+		<form method="post" action="multipleChoiceEditPost">
+			<input type="hidden" name="id" id="id" value="@spec.id"/>
+			Prompt: <input type="text" name="prompt" id="prompt" value="@spec.prompt"/><br>
+			<ol id="mcol">
+				@for((opt,index) <- spec.options.zipWithIndex) {
+					<li id="mcil-@index"><input type="text" name="opt-@index" id="opt-@index" value="@opt" placeholder="Option" onfocusout="multipleChoiceFocusLost(@index)"/></li>
+				}
+				<li id="mcil-@spec.options.length"><input type="text" name="opt-@spec.options.length" id="opt-@spec.options.length" value="" placeholder="Option" onfocusout="multipleChoiceFocusLost(@spec.options.length)"/></li>
+			</ol>
+			Correct option: <input type="text" name="correct" id="correct" value="@spec.correct" placeholder="Correct value"/>
+			<br>
+			<input type="submit"/>
+			<a href="@routes.Application.instructorPage">Cancel</a>
+		</form>
+	</p>
+}

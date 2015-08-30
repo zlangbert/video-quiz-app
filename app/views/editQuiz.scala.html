@@ -1,6 +1,9 @@
 @* editQuiz Template File *@
 @(quizRow:Tables.QuizzesRow, taken:Boolean, probInfo:Seq[ProblemSpec])(implicit flash:Flash)
 
+@*
+Simplify down to listing questions and allowing them to be removed from the quiz. Consider option for adding to the quiz later.
+*@
 @main((if(quizRow.quizid<1) "Create" else "Edit")+"Quiz", true) {
 	<h2>@{if(quizRow.quizid<1) "Create" else "Edit"}Quiz</h2>
 	<hr>
@@ -36,7 +39,7 @@
 			<button id="addQuestion">Done</button>
 			<hr>
 			<input type="submit"/>
-			<a href="@routes.Application.quizList">Cancel</a>
+			<a href="@routes.Application.instructorPage">Cancel</a>
 		</form>
 	}
 }
