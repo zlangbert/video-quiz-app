@@ -1,5 +1,6 @@
 package controllers
 
+import forms.Forms
 import play.api._
 import play.api.mvc._
 import play.api.data.Forms._
@@ -21,11 +22,6 @@ class Application extends Controller {
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   import dbConfig.driver.api._
 
-  val userForm = Form(
-    mapping(
-      "Username" -> nonEmptyText,
-      "Trinity ID" -> nonEmptyText)((un, id) => UsersRow(0, un, id))(u => Some(u.username -> u.trinityid)))
-
   val newCourseForm = Form(
     mapping(
       "Course Code" -> nonEmptyText(7, 8),
@@ -37,7 +33,7 @@ class Application extends Controller {
   // GET Actions
 
   def index = Action(implicit request => {
-    Ok(views.html.mainMenu(userForm))
+    Ok(views.html.mainMenu(Forms.userForm))
   })
 
   def quizList = AuthenticatedAction(implicit request => {
@@ -187,7 +183,7 @@ class Application extends Controller {
   // POST Actions
 
   def verifyLogin = Action.async(implicit request => {
-    userForm.bindFromRequest().fold(
+    Forms.userForm.bindFromRequest().fold(
       formWithErrors => {
         Future { Ok(views.html.mainMenu(formWithErrors)) }
       },
