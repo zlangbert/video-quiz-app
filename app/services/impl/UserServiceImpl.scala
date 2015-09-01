@@ -42,12 +42,11 @@ class UserServiceImpl @Inject()(dbConfigProvider: DatabaseConfigProvider) extend
    * @return The user if they exist
    */
   override def retrieve(loginInfo: LoginInfo): Future[Option[User]] = {
-    implicit def s2Opt(s: String): Option[String] = Option(s)
     db.run(
       Tables.User.filter(_.id === loginInfo.providerKey).result.headOption
     ).map {
       _.map { u =>
-        User(LoginInfo(u.provider, u.id), u.firstName, u.lastName, None, u.email, None)
+        User(LoginInfo(u.provider, u.id), u.firstName, u.lastName, None, Option(u.email), None)
       }
     }
   }
