@@ -26,9 +26,6 @@
 		<script src="https://apis.google.com/js/platform.js" async defer></script>
     </head>
     <body>
-    	@if(showLogout) {
-    		<p><a href="@routes.Application.logout">Logout</a></p>
-    	}
     	@if(flash.get("refresh-delay").nonEmpty) {
 			<p>Page will refresh in @{flash("refresh-delay")} seconds to show your score. It could take up to 30 seconds
 			for broken code to complete. You can manually refresh or go look at the quiz if the scores aren't updated

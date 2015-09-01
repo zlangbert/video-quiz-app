@@ -2,19 +2,18 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+# Home page
+GET           /                              controllers.ApplicationController.index
+
 # Auth
-GET           /login                         controllers.Application.index
+GET           /login                         controllers.AuthController.login
 GET           /authenticate/:provider        controllers.AuthController.authenticate(provider)
 
 # Quiz
-GET           /quizes                        controllers.QuizController.list
+GET           /quizzes                        controllers.QuizController.list
 
-# Home page
-GET           /                              controllers.Application.index
 
-POST          /login                         controllers.Application.verifyLogin
 
-GET           /logout                        controllers.Application.logout
 
 GET           /quizList                      controllers.Application.quizList
 

@@ -100,10 +100,6 @@ class Application extends Controller {
     }
   }
 
-  def logout = Action { implicit request =>
-    Redirect(routes.Application.index()).withSession(request.session - "username" - "userid" - "instructor")
-  }
-
   def editQuiz(quizid: Int) = AuthenticatedInstructorAction { implicit request =>
     if (quizid < 1) {
       Future { Ok(views.html.editQuiz(QuizzesRow(quizid, null, null), false, Nil)) }
@@ -189,7 +185,7 @@ class Application extends Controller {
         val db = dbConfig.db
         Queries.validLogin(value, db).flatMap(_ match {
           case -1 =>
-            Future(Redirect(routes.Application.index))
+            Future(Redirect(routes.ApplicationController.index))
           case n =>
             val instructorCourses = Queries.instructorCourseIds(n, db)
             instructorCourses.map(_ match {
@@ -351,7 +347,7 @@ class Application extends Controller {
       if (authenticate(request)) {
         f(request)
       } else {
-        Future { Redirect(routes.Application.index()) }
+        Future { Redirect(routes.ApplicationController.index()) }
       }
     }
   }
@@ -361,7 +357,7 @@ class Application extends Controller {
       if (authenticate(request) && isInstructor(request)) {
         f(request)
       } else {
-        Future { Redirect(routes.Application.index()) }
+        Future { Redirect(routes.ApplicationController.index()) }
       }
     }
   }

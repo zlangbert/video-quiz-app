@@ -38,7 +38,7 @@ class AuthController @Inject()(val messagesApi: MessagesApi,
             authInfo <- authInfoRepository.save(profile.loginInfo, authInfo)
             authenticator <- env.authenticatorService.create(profile.loginInfo)
             value <- env.authenticatorService.init(authenticator)
-            result <- env.authenticatorService.embed(value, Redirect(routes.Application.index()))
+            result <- env.authenticatorService.embed(value, Redirect(routes.ApplicationController.index()))
           } yield {
               env.eventBus.publish(LoginEvent(user, request, request2Messages))
               result
@@ -48,7 +48,8 @@ class AuthController @Inject()(val messagesApi: MessagesApi,
     }).recover {
       case e: ProviderException =>
         logger.error("Unexpected provider error", e)
-        Redirect(routes.Application.index()).flashing("error" -> Messages("could.not.authenticate"))
+        Redirect(routes.ApplicationController.index())
+          .flashing("error" -> Messages("could.not.authenticate"))
     }
   }
 }
