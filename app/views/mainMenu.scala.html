@@ -1,15 +1,35 @@
-@(userForm:Form[Tables.UsersRow])(implicit flash:Flash)
+@(userForm: Form[Tables.UsersRow])(implicit flash:Flash)
 
 @import play.api.Play.current
 @import play.api.i18n.Messages.Implicits._
 
-@main("Main Menu", false) {
+@import views.forms.BootstrapFieldConstructor._
+
+@main("Main Menu", showLogout = false) {
+
+	<main style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+		@helper.form(action = routes.Application.verifyLogin, 'class -> "well form-horizontal", 'style -> "width: 450px") {
+			<fieldset>
+				<legend>Login</legend>
+				@helper.inputText(userForm("Username"), 'class -> "form-control")
+				@helper.inputPassword(userForm("Trinity ID"), 'class -> "form-control")
+				<div class="form-group">
+					<div class="col-xs-12" style="display: flex; justify-content: flex-end;">
+						<button class="btn btn-primary">Login</button>
+					</div>
+				</div>
+			</fieldset>
+		}
+	</main>
+
+
+
 	<p>Login</p>
 	@helper.form(action = routes.Application.verifyLogin) {
-		@helper.inputText(userForm("Username"))
+
 		@helper.inputPassword(userForm("Trinity ID"))
 		<div class='form-actions'>
-			<button type='submit'>Login</button>
+			<button type='submit' class="btn btn-primary">Login</button>
 		</div>
 	}
 }

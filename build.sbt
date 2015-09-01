@@ -17,6 +17,11 @@ libraryDependencies ++= Seq(
   specs2 % Test,
   "mysql" % "mysql-connector-java" % "5.1.36",
   "com.typesafe.slick" %% "slick-codegen" % "3.0.2"
+) ++ webjars
+
+lazy val webjars = Seq(
+  "org.webjars.bower" % "bootstrap" % "3.3.5",
+  "org.webjars.bower" % "bootstrap-material-design" % "0.3.0"
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
