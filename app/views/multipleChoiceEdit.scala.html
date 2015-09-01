@@ -6,7 +6,7 @@
 	<p>
 		<form method="post" action="multipleChoiceEditPost">
 			<input type="hidden" name="id" id="id" value="@spec.id"/>
-			Prompt: <input type="text" name="prompt" id="prompt" value="@spec.prompt"/><br>
+			Prompt: <textarea name="prompt" id="prompt">@spec.prompt"</textarea><br>
 			<ol id="mcol">
 				@for((opt,index) <- spec.options.zipWithIndex) {
 					<li id="mcil-@index"><input type="text" name="opt-@index" id="opt-@index" value="@opt" placeholder="Option" onfocusout="multipleChoiceFocusLost(@index)"/></li>

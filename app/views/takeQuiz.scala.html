@@ -8,7 +8,7 @@
 		<input type="hidden" name="quizid" value="@quiz.quizid"/>
 		@for(mcd <- quiz.multipleChoice) {
 			<div>
-			<p>@mcd.prompt</p>
+			<p>@for(l <- mcd.prompt.split("\n")) {@l<br>}</p>
 			@if(mcd.answer.nonEmpty) {
 				<ol>
 				@for(a <- mcd.options) {
@@ -19,7 +19,7 @@
 			} else {
 				<fieldset>
 				@for((a,i) <- mcd.options.zipWithIndex) {
-					<input type="radio" name="mc-@mcd.mcid" value="@i">@a<br>
+					<input type="radio" name="mc-@mcd.mcid" value="@{i+1}">@a<br>
 				}
 				</fieldset>
 			}
@@ -28,7 +28,7 @@
 		}
 		@for(cq <- quiz.codeQuestions) {
 			<div>
-			<p>@cq.prompt</p>
+			<p>@for(l <- cq.prompt.split("\n")) {@l<br>}</p>
 			@if(cq.correct) {
 				<p>You have answered this correctly with.</p>
 				<pre>@cq.lastCode.get</pre>

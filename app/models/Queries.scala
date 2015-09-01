@@ -14,28 +14,6 @@ import Tables._
  */
 object Queries {
   def main(args:Array[String]) {
-    val StudentRegex = """(\d{7})|(\w{2,8})@trinity\.edu""".r
-    val text = """Contact Us
-Ajani, Aroosa
-0786336
-aajani@trinity.edu
-Sophomore
-UG
-New
-3.00
-Blanke, Benjamin P.
-0785682
-bblanke@trinity.edu
-Sophomore
-UG
-New
-3.00
-"""
-    val d = (for(StudentRegex(id,uname) <- text.split("\n")) yield {
-      (id,uname)
-    }).dropWhile(_._1 == null)
-    val d2 = for(((a,null),(null,d)) <- d.zip(d.tail)) yield (a,d)
-    d2 foreach println
   }
   
   val Student = 1
@@ -96,6 +74,42 @@ New
       } else {
         println("cnt was "+cnt+" on insert of course")
       }
+    }
+  }
+  
+  def loadCourseData(courseid:Int, db:Database):Future[CourseData] = {
+    val courseRow = db.run(Courses.filter(_.courseid === courseid).result.head)
+    val instructors = db.run(
+      (for {
+        (row,assoc) <- Users join UserCourseAssoc on (_.userid === _.userid)
+        if assoc.courseid === courseid && assoc.role === Instructor
+      } yield row).result
+    )
+    val quizzes = db.run(
+      (for {
+        (quiz,assoc) <- Quizzes join QuizCourseCloseAssoc on (_.quizid === _.quizid)
+        if assoc.courseid === courseid
+      } yield (quiz,assoc)).result
+    )
+    val totals = quizzes.flatMap(s => Future.sequence(s.map(q => numberOfQuestions(q._1.quizid,db))))
+    val students = db.run(
+      (for {
+        (row,assoc) <- Users join UserCourseAssoc on (_.userid === _.userid)
+        if assoc.courseid === courseid && assoc.role === Student
+      } yield row).result
+    )
+    val studentData = students.flatMap(sur => Future.sequence(sur.map(sr => {
+      quizzes.flatMap(sq => Future.sequence(sq.map(q => numberOfCorrectQuestions(q._1.quizid, sr.userid, db)))).map(correct =>
+        StudentData(sr.userid,sr.username,correct.sum))
+    })))
+    for {
+      cr <- courseRow
+      is <- instructors
+      t <- totals
+      sd <- studentData
+      q <- quizzes
+    } yield {
+      CourseData(cr,is,sd,q.map(t => CourseQuizData(t._1,t._2.closeTime)),t.sum)
     }
   }
 

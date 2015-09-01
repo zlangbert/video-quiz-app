@@ -146,7 +146,9 @@ class Application extends Controller {
     Future { Ok(views.html.addCourse(newCourseForm)) }
   }
 
-  def viewCourse(courseid: Int) = TODO
+  def viewCourse(courseid: Int) = AuthenticatedInstructorAction { implicit request =>
+    Queries.loadCourseData(courseid, dbConfig.db).map(cd => Ok(views.html.viewCourse(cd)))
+  } 
 
   def setupDatabase = Action { implicit request =>
     dbConfig.db.run(Users.filter(_.username === "mlewis").result).map(s =>
@@ -217,6 +219,7 @@ class Application extends Controller {
           for (key <- params.keys; if key.startsWith("mc-")) {
             val mcid = key.drop(3).toInt
             val pspec = ProblemSpec(ProblemSpec.MultipleChoiceType, mcid, db)
+            println("You answered "+params(key)(0))
             val correct = pspec.map(_.checkResponse(params(key)(0)))
             val selection = try { params(key)(0).toInt } catch { case e: NumberFormatException => -1 }
             correct.map(c => db.run(McAnswers += McAnswersRow(Some(userid), Some(quizid), Some(mcid), selection, c)))

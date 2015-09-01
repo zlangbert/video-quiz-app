@@ -123,3 +123,5 @@ CREATE TABLE code_answers (
 	question_type INT NOT NULL,
 	answer VARCHAR(4000) NOT NULL,
 	correct BOOLEAN NOT NULL);
+
+GRANT ALL ON video_quizzes.* TO 'mlewis'@'localhost';
