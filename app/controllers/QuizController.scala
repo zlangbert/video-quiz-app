@@ -2,15 +2,22 @@ package controllers
 
 import javax.inject.Inject
 
-import play.api.mvc._
+import com.mohiva.play.silhouette.api.{Environment, Silhouette}
+import com.mohiva.play.silhouette.impl.User
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import play.api.i18n.MessagesApi
 import services.QuizService
 
 import scala.concurrent.Future
 
-class QuizController @Inject()(quizService: QuizService) extends Controller {
+class QuizController @Inject()(val messagesApi: MessagesApi,
+                               val env: Environment[User, CookieAuthenticator],
+                               quizService: QuizService)
+  extends Silhouette[User, CookieAuthenticator] {
 
-  def list = Action.async { implicit request =>
-    val quizzes = ???
-    Future.successful(Ok(views.html.quizList(quizzes)))
+  def list = SecuredAction.async { implicit request =>
+    Future.successful(Ok(request.identity.toString))
+    /*val quizzes = ???
+    Future.successful(Ok(views.html.quizList(quizzes)))*/
   }
 }

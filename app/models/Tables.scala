@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema = Array(CodeAnswers.schema, Courses.schema, ExpressionAssoc.schema, ExpressionQuestions.schema, FunctionAssoc.schema, FunctionQuestions.schema, LambdaAssoc.schema, LambdaQuestions.schema, McAnswers.schema, MultipleChoiceAssoc.schema, MultipleChoiceQuestions.schema, QuizCourseCloseAssoc.schema, Quizzes.schema, UserCourseAssoc.schema, Users.schema, VariableSpecifications.schema).reduceLeft(_ ++ _)
+  lazy val schema = Array(CodeAnswers.schema, Courses.schema, ExpressionAssoc.schema, ExpressionQuestions.schema, FunctionAssoc.schema, FunctionQuestions.schema, LambdaAssoc.schema, LambdaQuestions.schema, McAnswers.schema, MultipleChoiceAssoc.schema, MultipleChoiceQuestions.schema, PlayEvolutions.schema, QuizCourseCloseAssoc.schema, Quizzes.schema, User.schema, UserCourseAssoc.schema, Users.schema, VariableSpecifications.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -376,6 +376,44 @@ trait Tables {
   /** Collection-like TableQuery object for table MultipleChoiceQuestions */
   lazy val MultipleChoiceQuestions = new TableQuery(tag => new MultipleChoiceQuestions(tag))
 
+  /** Entity class storing rows of table PlayEvolutions
+   *  @param id Database column id SqlType(INT), PrimaryKey
+   *  @param hash Database column hash SqlType(VARCHAR), Length(255,true)
+   *  @param appliedAt Database column applied_at SqlType(TIMESTAMP)
+   *  @param applyScript Database column apply_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None)
+   *  @param revertScript Database column revert_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None)
+   *  @param state Database column state SqlType(VARCHAR), Length(255,true), Default(None)
+   *  @param lastProblem Database column last_problem SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
+  case class PlayEvolutionsRow(id: Int, hash: String, appliedAt: java.sql.Timestamp, applyScript: Option[String] = None, revertScript: Option[String] = None, state: Option[String] = None, lastProblem: Option[String] = None)
+  /** GetResult implicit for fetching PlayEvolutionsRow objects using plain SQL queries */
+  implicit def GetResultPlayEvolutionsRow(implicit e0: GR[Int], e1: GR[String], e2: GR[java.sql.Timestamp], e3: GR[Option[String]]): GR[PlayEvolutionsRow] = GR{
+    prs => import prs._
+    PlayEvolutionsRow.tupled((<<[Int], <<[String], <<[java.sql.Timestamp], <<?[String], <<?[String], <<?[String], <<?[String]))
+  }
+  /** Table description of table play_evolutions. Objects of this class serve as prototypes for rows in queries. */
+  class PlayEvolutions(_tableTag: Tag) extends Table[PlayEvolutionsRow](_tableTag, "play_evolutions") {
+    def * = (id, hash, appliedAt, applyScript, revertScript, state, lastProblem) <> (PlayEvolutionsRow.tupled, PlayEvolutionsRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), Rep.Some(hash), Rep.Some(appliedAt), applyScript, revertScript, state, lastProblem).shaped.<>({r=>import r._; _1.map(_=> PlayEvolutionsRow.tupled((_1.get, _2.get, _3.get, _4, _5, _6, _7)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(INT), PrimaryKey */
+    val id: Rep[Int] = column[Int]("id", O.PrimaryKey)
+    /** Database column hash SqlType(VARCHAR), Length(255,true) */
+    val hash: Rep[String] = column[String]("hash", O.Length(255,varying=true))
+    /** Database column applied_at SqlType(TIMESTAMP) */
+    val appliedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("applied_at")
+    /** Database column apply_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
+    val applyScript: Rep[Option[String]] = column[Option[String]]("apply_script", O.Length(16777215,varying=true), O.Default(None))
+    /** Database column revert_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
+    val revertScript: Rep[Option[String]] = column[Option[String]]("revert_script", O.Length(16777215,varying=true), O.Default(None))
+    /** Database column state SqlType(VARCHAR), Length(255,true), Default(None) */
+    val state: Rep[Option[String]] = column[Option[String]]("state", O.Length(255,varying=true), O.Default(None))
+    /** Database column last_problem SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
+    val lastProblem: Rep[Option[String]] = column[Option[String]]("last_problem", O.Length(16777215,varying=true), O.Default(None))
+  }
+  /** Collection-like TableQuery object for table PlayEvolutions */
+  lazy val PlayEvolutions = new TableQuery(tag => new PlayEvolutions(tag))
+
   /** Entity class storing rows of table QuizCourseCloseAssoc
    *  @param quizid Database column quizid SqlType(INT), Default(None)
    *  @param courseid Database column courseid SqlType(INT), Default(None)
@@ -409,9 +447,9 @@ trait Tables {
 
   /** Entity class storing rows of table Quizzes
    *  @param quizid Database column quizid SqlType(INT), AutoInc, PrimaryKey
-   *  @param description Database column description SqlType(VARCHAR), Length(4000,true)
-   *  @param name Database column name SqlType(VARCHAR), Length(80,true) */
-  case class QuizzesRow(quizid: Int, description: String, name: String)
+   *  @param name Database column name SqlType(VARCHAR), Length(80,true)
+   *  @param description Database column description SqlType(VARCHAR), Length(4000,true) */
+  case class QuizzesRow(quizid: Int, name: String, description: String)
   /** GetResult implicit for fetching QuizzesRow objects using plain SQL queries */
   implicit def GetResultQuizzesRow(implicit e0: GR[Int], e1: GR[String]): GR[QuizzesRow] = GR{
     prs => import prs._
@@ -419,19 +457,51 @@ trait Tables {
   }
   /** Table description of table quizzes. Objects of this class serve as prototypes for rows in queries. */
   class Quizzes(_tableTag: Tag) extends Table[QuizzesRow](_tableTag, "quizzes") {
-    def * = (quizid, description, name) <> (QuizzesRow.tupled, QuizzesRow.unapply)
+    def * = (quizid, name, description) <> (QuizzesRow.tupled, QuizzesRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(quizid), Rep.Some(description), Rep.Some(name)).shaped.<>({r=>import r._; _1.map(_=> QuizzesRow.tupled((_1.get, _2.get, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(quizid), Rep.Some(name), Rep.Some(description)).shaped.<>({r=>import r._; _1.map(_=> QuizzesRow.tupled((_1.get, _2.get, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column quizid SqlType(INT), AutoInc, PrimaryKey */
     val quizid: Rep[Int] = column[Int]("quizid", O.AutoInc, O.PrimaryKey)
-    /** Database column description SqlType(VARCHAR), Length(4000,true) */
-    val description: Rep[String] = column[String]("description", O.Length(4000,varying=true))
     /** Database column name SqlType(VARCHAR), Length(80,true) */
     val name: Rep[String] = column[String]("name", O.Length(80,varying=true))
+    /** Database column description SqlType(VARCHAR), Length(4000,true) */
+    val description: Rep[String] = column[String]("description", O.Length(4000,varying=true))
   }
   /** Collection-like TableQuery object for table Quizzes */
   lazy val Quizzes = new TableQuery(tag => new Quizzes(tag))
+
+  /** Entity class storing rows of table User
+   *  @param id Database column id SqlType(VARCHAR), PrimaryKey, Length(24,true)
+   *  @param provider Database column provider SqlType(VARCHAR), Length(24,true)
+   *  @param email Database column email SqlType(VARCHAR), Length(64,true)
+   *  @param firstName Database column first_name SqlType(VARCHAR), Length(64,true), Default(None)
+   *  @param lastName Database column last_name SqlType(VARCHAR), Length(64,true), Default(None) */
+  case class UserRow(id: String, provider: String, email: String, firstName: Option[String] = None, lastName: Option[String] = None)
+  /** GetResult implicit for fetching UserRow objects using plain SQL queries */
+  implicit def GetResultUserRow(implicit e0: GR[String], e1: GR[Option[String]]): GR[UserRow] = GR{
+    prs => import prs._
+    UserRow.tupled((<<[String], <<[String], <<[String], <<?[String], <<?[String]))
+  }
+  /** Table description of table user. Objects of this class serve as prototypes for rows in queries. */
+  class User(_tableTag: Tag) extends Table[UserRow](_tableTag, "user") {
+    def * = (id, provider, email, firstName, lastName) <> (UserRow.tupled, UserRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), Rep.Some(provider), Rep.Some(email), firstName, lastName).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2.get, _3.get, _4, _5)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(VARCHAR), PrimaryKey, Length(24,true) */
+    val id: Rep[String] = column[String]("id", O.PrimaryKey, O.Length(24,varying=true))
+    /** Database column provider SqlType(VARCHAR), Length(24,true) */
+    val provider: Rep[String] = column[String]("provider", O.Length(24,varying=true))
+    /** Database column email SqlType(VARCHAR), Length(64,true) */
+    val email: Rep[String] = column[String]("email", O.Length(64,varying=true))
+    /** Database column first_name SqlType(VARCHAR), Length(64,true), Default(None) */
+    val firstName: Rep[Option[String]] = column[Option[String]]("first_name", O.Length(64,varying=true), O.Default(None))
+    /** Database column last_name SqlType(VARCHAR), Length(64,true), Default(None) */
+    val lastName: Rep[Option[String]] = column[Option[String]]("last_name", O.Length(64,varying=true), O.Default(None))
+  }
+  /** Collection-like TableQuery object for table User */
+  lazy val User = new TableQuery(tag => new User(tag))
 
   /** Entity class storing rows of table UserCourseAssoc
    *  @param userid Database column userid SqlType(INT), Default(None)

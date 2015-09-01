@@ -1,6 +1,5 @@
 package controllers
 
-import forms.Forms
 import play.api._
 import play.api.mvc._
 import play.api.data.Forms._
@@ -31,10 +30,6 @@ class Application extends Controller {
       "Student Data" -> nonEmptyText)(NewCourseData.apply)(NewCourseData.unapply))
 
   // GET Actions
-
-  def index = Action(implicit request => {
-    Ok(views.html.mainMenu(Forms.userForm))
-  })
 
   def quizList = AuthenticatedAction(implicit request => {
     val uname = request.session.get("username").getOrElse("No name")
@@ -177,28 +172,6 @@ class Application extends Controller {
   }
 
   // POST Actions
-
-  def verifyLogin = Action.async(implicit request => {
-    Forms.userForm.bindFromRequest().fold(
-      formWithErrors => {
-        Future { Ok(views.html.mainMenu(formWithErrors)) }
-      },
-      value => {
-        val db = dbConfig.db
-        Queries.validLogin(value, db).flatMap(_ match {
-          case -1 =>
-            Future(Redirect(routes.ApplicationController.index))
-          case n =>
-            val instructorCourses = Queries.instructorCourseIds(n, db)
-            instructorCourses.map(_ match {
-              case Seq() =>
-                Redirect(routes.Application.quizList).withSession(request.session + ("username" -> value.username) + ("userid" -> n.toString))
-              case _ =>
-                Redirect(routes.Application.instructorPage).withSession(request.session + ("username" -> value.username) + ("userid" -> n.toString) + ("instructor" -> "yes"))
-            })
-        })
-      })
-  })
 
   def submitQuiz = AuthenticatedAction { implicit request =>
     {
