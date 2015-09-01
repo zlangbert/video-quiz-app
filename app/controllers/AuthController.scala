@@ -4,15 +4,14 @@ import javax.inject.Inject
 
 import com.mohiva.play.silhouette.api.exceptions.ProviderException
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
-import com.mohiva.play.silhouette.api.{LoginEvent, Logger, Environment, Silhouette}
+import com.mohiva.play.silhouette.api.{Environment, Logger, LoginEvent, Silhouette}
 import com.mohiva.play.silhouette.impl.User
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
-import com.mohiva.play.silhouette.impl.providers.{SocialProviderRegistry, CommonSocialProfileBuilder, SocialProvider}
-import forms.Forms
+import com.mohiva.play.silhouette.impl.providers.{CommonSocialProfileBuilder, SocialProvider, SocialProviderRegistry}
 import play.api.i18n.{Messages, MessagesApi}
+import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
 import services.UserService
-import play.api.libs.concurrent.Execution.Implicits._
 
 import scala.concurrent.Future
 
@@ -24,7 +23,7 @@ class AuthController @Inject()(val messagesApi: MessagesApi,
   extends Silhouette[User, CookieAuthenticator] with Logger {
 
   def login = Action { implicit request =>
-    Ok(views.html.mainMenu(Forms.userForm))
+    Ok(views.html.login())
   }
 
   def authenticate(provider: String) = Action.async { implicit request =>

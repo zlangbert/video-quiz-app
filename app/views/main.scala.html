@@ -1,4 +1,4 @@
-@(title: String, showLogout: Boolean)(content: Html)(implicit flash:Flash)
+@(title: String, showLogout: Boolean = false)(content: Html)(implicit flash:Flash)
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,24 +6,15 @@
     	@if(flash.get("refresh-delay").nonEmpty) {
 			<meta http-equiv="refresh" content="@{flash("refresh-delay")}">
     	}
+
         <title>@title</title>
+
         <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
         <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
-        <script src="@routes.Assets.versioned("javascripts/quizEditScripts.js")" type="text/javascript"></script>
-        <!-- jQuery -->
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-		        
-        <!-- Latest compiled and minified CSS -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-		
-		<!-- Optional theme -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
-		
-		<!-- Latest compiled and minified JavaScript -->
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-		
-		<!-- Used for Google login -->
-		<script src="https://apis.google.com/js/platform.js" async defer></script>
+
+
+        <link href="@routes.Assets.versioned("lib/bootstrap/dist/css/bootstrap.css")" rel="stylesheet">
+        <link href="@routes.Assets.versioned("lib/bootstrap-material-design/dist/css/material.css")" rel="stylesheet">
     </head>
     <body>
     	@if(flash.get("refresh-delay").nonEmpty) {
@@ -35,5 +26,13 @@
     		@flash.get("message")
     	}
         @content
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+		<script src="@routes.Assets.versioned("lib/bootstrap-material-design/dist/js/material.js")"></script>
+		<script>
+			$.material.init()
+		</script>
+
+        <script src="@routes.Assets.versioned("javascripts/quizEditScripts.js")" type="text/javascript"></script>
     </body>
 </html>
