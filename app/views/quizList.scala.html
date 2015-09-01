@@ -1,31 +1,35 @@
-@(quizzes:Seq[(String,Seq[(Tables.QuizzesRow,java.sql.Timestamp,Int,Int)], Seq[(Tables.QuizzesRow,java.sql.Timestamp,Int,Int)])])(implicit flash:Flash)
+@(quizzes: Seq[(String, Seq[(Tables.QuizzesRow, java.sql.Timestamp, Int, Int)], Seq[(Tables.QuizzesRow, java.sql.Timestamp, Int, Int)])])(implicit flash: Flash)
 
-@main("Quiz List", true) {
-	@for((cname,openQuizzes,completedQuizzes) <- quizzes) {
-		<h2>@cname</h2>
-		<h3>Open Quizzes</h3>
-		<table border="1">
-		<tr><th>Quiz Name</th><th>Description</th><th>Closing Time</th><th>Correct / Total</th></tr>
-		@for((q,time,corr,tot) <- openQuizzes) {
-			<tr>
-			<td><a href="@routes.Application.takeQuiz(q.quizid)">@q.name</a></td>
-			<td>@q.description</td>
-			<td>@time</td>
-			<td>@corr / @tot</td>
-			</tr>
-		}
-		</table>
-		<h3>Completed Quizzes</h3>
-		<table border="1">
-		<tr><th>Quiz Name</th><th>Description</th><th>Correct / Total</th></tr>
-		@for((q,_,corr,tot) <- completedQuizzes) {
-			<tr>
-			<td><a href="@routes.Application.viewQuiz(q.quizid)">@q.name</a></td>
-			<td>@q.description</td>
-			<td>@corr / @tot</td>
-			</tr>
-		}
-		<tr><td>Total</td><td></td><td>@{completedQuizzes.map(_._3).sum} / @{completedQuizzes.map(_._4).sum}</td></tr>
-		</table>
-	}
-}
+    @main("Quiz List", true) {
+        @for((cname, openQuizzes, completedQuizzes) <- quizzes) {
+            <h2>@cname</h2>
+            <h3>Open Quizzes</h3>
+            <table border="1">
+                <tr><th>Quiz Name</th> <th>Description</th> <th>Closing Time</th> <th>Correct / Total</th></tr>
+                @for((q, time, corr, tot) <- openQuizzes) {
+                    <tr>
+                        <td><a href="@routes.Application.takeQuiz(q.quizid)">@q.name</a></td>
+                        <td>@q.description</td>
+                        <td>@time</td>
+                        <td>@corr / @tot</td>
+                    </tr>
+                }
+            </table>
+            <h3>Completed Quizzes</h3>
+            <table border="1">
+                <tr><th>Quiz Name</th> <th>Description</th> <th>Correct / Total</th></tr>
+                @for((q, _, corr, tot) <- completedQuizzes) {
+                    <tr>
+                        <td><a href="@routes.Application.viewQuiz(q.quizid)">@q.name</a></td>
+                        <td>@q.description</td>
+                        <td>@corr / @tot</td>
+                    </tr>
+                }
+                <tr><td>Total</td> <td></td> <td>@{
+                    completedQuizzes.map(_._3).sum
+                } / @{
+                    completedQuizzes.map(_._4).sum
+                }</td></tr>
+            </table>
+        }
+    }

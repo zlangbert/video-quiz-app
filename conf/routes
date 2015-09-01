@@ -2,64 +2,71 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+# Auth
+GET           /login                         controllers.Application.index
+GET           /authenticate/:provider        controllers.AuthController.authenticate(provider)
+
+# Quiz
+GET           /quizes                        controllers.QuizController.list
+
 # Home page
-GET     /                           controllers.Application.index
+GET           /                              controllers.Application.index
 
-POST	/login						controllers.Application.verifyLogin
+POST          /login                         controllers.Application.verifyLogin
 
-GET		/logout						controllers.Application.logout
+GET           /logout                        controllers.Application.logout
 
-GET		/quizList					controllers.Application.quizList
+GET           /quizList                      controllers.Application.quizList
 
-GET		/viewQuiz					controllers.Application.viewQuiz(quizid:Int)
+GET           /viewQuiz                      controllers.Application.viewQuiz(quizid:Int)
 
-GET		/takeQuiz					controllers.Application.takeQuiz(quizid:Int)
+GET           /takeQuiz                      controllers.Application.takeQuiz(quizid:Int)
 
-GET		/instructorPage				controllers.Application.instructorPage
+GET           /instructorPage                controllers.Application.instructorPage
 
-GET		/editQuiz					controllers.Application.editQuiz(quizid: Int)
+GET           /editQuiz                      controllers.Application.editQuiz(quizid: Int)
 
-GET		/multipleChoiceEdit			controllers.Application.multipleChoiceEdit(id: Int)
+GET           /multipleChoiceEdit            controllers.Application.multipleChoiceEdit(id: Int)
 
-GET		/functionEdit				controllers.Application.writeFunctionEdit(id: Int)
+GET           /functionEdit                  controllers.Application.writeFunctionEdit(id: Int)
 
-GET		/lambdaEdit					controllers.Application.writeLambdaEdit(id: Int)
+GET           /lambdaEdit                    controllers.Application.writeLambdaEdit(id: Int)
 
-GET		/expressionEdit				controllers.Application.writeExpressionEdit(id: Int)
+GET           /expressionEdit                controllers.Application.writeExpressionEdit(id: Int)
 
-GET		/addCourse					controllers.Application.addCourse
+GET           /addCourse                     controllers.Application.addCourse
 
-GET		/viewCourse					controllers.Application.viewCourse(courseid: Int)
+GET           /viewCourse                    controllers.Application.viewCourse(courseid: Int)
 
-POST	/submitQuiz					controllers.Application.submitQuiz
+POST          /submitQuiz                    controllers.Application.submitQuiz
 
-POST	/addCoursePost				controllers.Application.addCoursePost
+POST          /addCoursePost                 controllers.Application.addCoursePost
 
-POST	/editQuizPost				controllers.Application.editQuizPost
+POST          /editQuizPost                  controllers.Application.editQuizPost
 
-POST	/multipleChoiceEditPost		controllers.Application.multipleChoiceEditPost
-
-
-PUT		/associateQuiz				controllers.Application.associateQuizWithCourse(quizid:Int, courseid:Int, closingTime:String)
-
-PUT		/addMCToQuiz				controllers.Application.associateMCQuestionWithQuiz(questionid: Int, quizid: Int)
-
-PUT		/addFuncToQuiz				controllers.Application.associateFuncQuestionWithQuiz(questionid: Int, quizid: Int)
-
-PUT		/addLambdaToQuiz			controllers.Application.associateLambdaQuestionWithQuiz(questionid: Int, quizid: Int)
-
-PUT		/addExprToQuiz				controllers.Application.associateExprQuestionWithQuiz(questionid: Int, quizid: Int)
-
-PUT		/addQuizToCourse			controllers.Application.associateQuizWithCourse(quizid: Int, courseid: Int, dateTime)
-
-PUT		/createUser					controllers.Application.createUser(username, id)
+POST          /multipleChoiceEditPost        controllers.Application.multipleChoiceEditPost
 
 
-DELETE	/removeQuestionFromQuiz		controllers.Application.removeQuestionQuizAssoc(questionid: Int, questionType: Int, quizid: Int)
+PUT           /associateQuiz                 controllers.Application.associateQuizWithCourse(quizid:Int, courseid:Int, closingTime:String)
 
-GET		/fetch/:user				controllers.Application.fetch(user)
+PUT           /addMCToQuiz                   controllers.Application.associateMCQuestionWithQuiz(questionid: Int, quizid: Int)
 
-GET		/setupDatabase				controllers.Application.setupDatabase
+PUT           /addFuncToQuiz                 controllers.Application.associateFuncQuestionWithQuiz(questionid: Int, quizid: Int)
+
+PUT           /addLambdaToQuiz               controllers.Application.associateLambdaQuestionWithQuiz(questionid: Int, quizid: Int)
+
+PUT           /addExprToQuiz                 controllers.Application.associateExprQuestionWithQuiz(questionid: Int, quizid: Int)
+
+PUT           /addQuizToCourse               controllers.Application.associateQuizWithCourse(quizid: Int, courseid: Int, dateTime)
+
+PUT           /createUser                    controllers.Application.createUser(username, id)
+
+
+DELETE        /removeQuestionFromQuiz        controllers.Application.removeQuestionQuizAssoc(questionid: Int, questionType: Int, quizid: Int)
+
+GET           /fetch/:user                   controllers.Application.fetch(user)
+
+GET           /setupDatabase                 controllers.Application.setupDatabase
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET           /assets/*file                  controllers.Assets.versioned(path="/public", file: Asset)
