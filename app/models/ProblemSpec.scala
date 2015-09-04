@@ -1,17 +1,16 @@
 package models
 
-import java.io.File
-import java.io.PrintWriter
-import sys.process._
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext
+import java.io.{File, PrintWriter}
+
+import models.Tables._
 import slick.driver.MySQLDriver.api._
-import scala.concurrent.duration.Duration
-import scala.concurrent.Await
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import Tables._
+import scala.concurrent.Future
+import scala.sys.process._
 
 object ProblemSpec {
+
   val MultipleChoiceType = 0
   val FunctionType = 1
   val LambdaType = 2
@@ -70,7 +69,7 @@ object ProblemSpec {
     s"""import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
-    
+
 Future {
    Thread.sleep(10000)
    sys.exit(1)
@@ -99,8 +98,9 @@ sys.exit(0)
 
 sealed trait ProblemSpec {
   def checkResponse(response: String): Boolean
-  val id:Int
-  val typeValue:Int
+
+  val id: Int
+  val typeValue: Int
   val prompt: String
 }
 
@@ -112,6 +112,7 @@ case class MultipleChoice(id: Int, prompt: String, options: Seq[String], correct
       case e: NumberFormatException => false
     }
   }
+
   val typeValue = ProblemSpec.MultipleChoiceType
 }
 
@@ -127,6 +128,7 @@ case class WriteFunction(id: Int, prompt: String, correctCode: String, functionN
       """
     ProblemSpec.runCode(code, "", numRuns)
   }
+
   val typeValue = ProblemSpec.FunctionType
 }
 
@@ -143,6 +145,7 @@ case class WriteLambda(id: Int, prompt: String, correctCode: String, returnType:
       """
     ProblemSpec.runCode(code, "", numRuns)
   }
+
   val typeValue = ProblemSpec.LambdaType
 }
 
@@ -155,8 +158,10 @@ case class WriteExpression(id: Int, prompt: String, correctCode: String, varSpec
       """
     ProblemSpec.runCode(code, "", numRuns)
   }
+
   val typeValue = ProblemSpec.ExpressionType
 }
+
 /*
 case class IOCode(prompt: String) extends ProblemSpec {
   def checkResponse(response: String): Boolean = ???

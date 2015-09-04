@@ -12,6 +12,6 @@ class ApplicationController @Inject()(val messagesApi: MessagesApi,
   extends Silhouette[User, CookieAuthenticator] {
 
   def index = SecuredAction { implicit request =>
-    Redirect(routes.QuizController.list())
+    Redirect(routes.Application.quizList())
   }
 }

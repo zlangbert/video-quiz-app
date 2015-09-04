@@ -14,9 +14,35 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema = Array(CodeAnswers.schema, Courses.schema, ExpressionAssoc.schema, ExpressionQuestions.schema, FunctionAssoc.schema, FunctionQuestions.schema, LambdaAssoc.schema, LambdaQuestions.schema, McAnswers.schema, MultipleChoiceAssoc.schema, MultipleChoiceQuestions.schema, QuizCourseCloseAssoc.schema, Quizzes.schema, User.schema, UserCourseAssoc.schema, Users.schema, VariableSpecifications.schema).reduceLeft(_ ++ _)
+  lazy val schema = Array(Answer.schema, CodeAnswers.schema, Course.schema, Courses.schema, ExpressionAssoc.schema, ExpressionQuestions.schema, FunctionAssoc.schema, FunctionQuestions.schema, LambdaAssoc.schema, LambdaQuestions.schema, McAnswers.schema, MultipleChoiceAssoc.schema, MultipleChoiceQuestions.schema, PlayEvolutions.schema, Question.schema, Quiz.schema, QuizCourseCloseAssoc.schema, QuizQuestion.schema, Quizzes.schema, User.schema, UserCourseAssoc.schema, Users.schema, VariableSpecifications.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
+
+  /** Entity class storing rows of table Answer
+   *  @param userId Database column user_id SqlType(VARCHAR), Length(24,true), Default(None)
+   *  @param questionId Database column question_id SqlType(INT), Default(None) */
+  case class AnswerRow(userId: Option[String] = None, questionId: Option[Int] = None)
+  /** GetResult implicit for fetching AnswerRow objects using plain SQL queries */
+  implicit def GetResultAnswerRow(implicit e0: GR[Option[String]], e1: GR[Option[Int]]): GR[AnswerRow] = GR{
+    prs => import prs._
+    AnswerRow.tupled((<<?[String], <<?[Int]))
+  }
+  /** Table description of table answer. Objects of this class serve as prototypes for rows in queries. */
+  class Answer(_tableTag: Tag) extends Table[AnswerRow](_tableTag, "answer") {
+    def * = (userId, questionId) <> (AnswerRow.tupled, AnswerRow.unapply)
+
+    /** Database column user_id SqlType(VARCHAR), Length(24,true), Default(None) */
+    val userId: Rep[Option[String]] = column[Option[String]]("user_id", O.Length(24,varying=true), O.Default(None))
+    /** Database column question_id SqlType(INT), Default(None) */
+    val questionId: Rep[Option[Int]] = column[Option[Int]]("question_id", O.Default(None))
+
+    /** Foreign key referencing Question (database name answer_ibfk_2) */
+    lazy val questionFk = foreignKey("answer_ibfk_2", questionId, Question)(r => Rep.Some(r.id), onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    /** Foreign key referencing User (database name answer_ibfk_1) */
+    lazy val userFk = foreignKey("answer_ibfk_1", userId, User)(r => Rep.Some(r.id), onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  }
+  /** Collection-like TableQuery object for table Answer */
+  lazy val Answer = new TableQuery(tag => new Answer(tag))
 
   /** Entity class storing rows of table CodeAnswers
    *  @param userid Database column userid SqlType(INT), Default(None)
@@ -57,6 +83,35 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table CodeAnswers */
   lazy val CodeAnswers = new TableQuery(tag => new CodeAnswers(tag))
+
+  /** Entity class storing rows of table Course
+   *  @param id Database column id SqlType(INT), AutoInc, PrimaryKey
+   *  @param code Database column code SqlType(VARCHAR), Length(8,true)
+   *  @param semester Database column semester SqlType(VARCHAR), Length(3,true), Default(None)
+   *  @param section Database column section SqlType(INT), Default(None) */
+  case class CourseRow(id: Int, code: String, semester: Option[String] = None, section: Option[Int] = None)
+  /** GetResult implicit for fetching CourseRow objects using plain SQL queries */
+  implicit def GetResultCourseRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[String]], e3: GR[Option[Int]]): GR[CourseRow] = GR{
+    prs => import prs._
+    CourseRow.tupled((<<[Int], <<[String], <<?[String], <<?[Int]))
+  }
+  /** Table description of table course. Objects of this class serve as prototypes for rows in queries. */
+  class Course(_tableTag: Tag) extends Table[CourseRow](_tableTag, "course") {
+    def * = (id, code, semester, section) <> (CourseRow.tupled, CourseRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), Rep.Some(code), semester, section).shaped.<>({r=>import r._; _1.map(_=> CourseRow.tupled((_1.get, _2.get, _3, _4)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(INT), AutoInc, PrimaryKey */
+    val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
+    /** Database column code SqlType(VARCHAR), Length(8,true) */
+    val code: Rep[String] = column[String]("code", O.Length(8,varying=true))
+    /** Database column semester SqlType(VARCHAR), Length(3,true), Default(None) */
+    val semester: Rep[Option[String]] = column[Option[String]]("semester", O.Length(3,varying=true), O.Default(None))
+    /** Database column section SqlType(INT), Default(None) */
+    val section: Rep[Option[Int]] = column[Option[Int]]("section", O.Default(None))
+  }
+  /** Collection-like TableQuery object for table Course */
+  lazy val Course = new TableQuery(tag => new Course(tag))
 
   /** Entity class storing rows of table Courses
    *  @param courseid Database column courseid SqlType(INT), AutoInc, PrimaryKey
@@ -376,6 +431,98 @@ trait Tables {
   /** Collection-like TableQuery object for table MultipleChoiceQuestions */
   lazy val MultipleChoiceQuestions = new TableQuery(tag => new MultipleChoiceQuestions(tag))
 
+  /** Entity class storing rows of table PlayEvolutions
+   *  @param id Database column id SqlType(INT), PrimaryKey
+   *  @param hash Database column hash SqlType(VARCHAR), Length(255,true)
+   *  @param appliedAt Database column applied_at SqlType(TIMESTAMP)
+   *  @param applyScript Database column apply_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None)
+   *  @param revertScript Database column revert_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None)
+   *  @param state Database column state SqlType(VARCHAR), Length(255,true), Default(None)
+   *  @param lastProblem Database column last_problem SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
+  case class PlayEvolutionsRow(id: Int, hash: String, appliedAt: java.sql.Timestamp, applyScript: Option[String] = None, revertScript: Option[String] = None, state: Option[String] = None, lastProblem: Option[String] = None)
+  /** GetResult implicit for fetching PlayEvolutionsRow objects using plain SQL queries */
+  implicit def GetResultPlayEvolutionsRow(implicit e0: GR[Int], e1: GR[String], e2: GR[java.sql.Timestamp], e3: GR[Option[String]]): GR[PlayEvolutionsRow] = GR{
+    prs => import prs._
+    PlayEvolutionsRow.tupled((<<[Int], <<[String], <<[java.sql.Timestamp], <<?[String], <<?[String], <<?[String], <<?[String]))
+  }
+  /** Table description of table play_evolutions. Objects of this class serve as prototypes for rows in queries. */
+  class PlayEvolutions(_tableTag: Tag) extends Table[PlayEvolutionsRow](_tableTag, "play_evolutions") {
+    def * = (id, hash, appliedAt, applyScript, revertScript, state, lastProblem) <> (PlayEvolutionsRow.tupled, PlayEvolutionsRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), Rep.Some(hash), Rep.Some(appliedAt), applyScript, revertScript, state, lastProblem).shaped.<>({r=>import r._; _1.map(_=> PlayEvolutionsRow.tupled((_1.get, _2.get, _3.get, _4, _5, _6, _7)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(INT), PrimaryKey */
+    val id: Rep[Int] = column[Int]("id", O.PrimaryKey)
+    /** Database column hash SqlType(VARCHAR), Length(255,true) */
+    val hash: Rep[String] = column[String]("hash", O.Length(255,varying=true))
+    /** Database column applied_at SqlType(TIMESTAMP) */
+    val appliedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("applied_at")
+    /** Database column apply_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
+    val applyScript: Rep[Option[String]] = column[Option[String]]("apply_script", O.Length(16777215,varying=true), O.Default(None))
+    /** Database column revert_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
+    val revertScript: Rep[Option[String]] = column[Option[String]]("revert_script", O.Length(16777215,varying=true), O.Default(None))
+    /** Database column state SqlType(VARCHAR), Length(255,true), Default(None) */
+    val state: Rep[Option[String]] = column[Option[String]]("state", O.Length(255,varying=true), O.Default(None))
+    /** Database column last_problem SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
+    val lastProblem: Rep[Option[String]] = column[Option[String]]("last_problem", O.Length(16777215,varying=true), O.Default(None))
+  }
+  /** Collection-like TableQuery object for table PlayEvolutions */
+  lazy val PlayEvolutions = new TableQuery(tag => new PlayEvolutions(tag))
+
+  /** Entity class storing rows of table Question
+   *  @param id Database column id SqlType(INT), AutoInc, PrimaryKey
+   *  @param `type` Database column type SqlType(INT)
+   *  @param prompt Database column prompt SqlType(TEXT) */
+  case class QuestionRow(id: Int, `type`: Int, prompt: String)
+  /** GetResult implicit for fetching QuestionRow objects using plain SQL queries */
+  implicit def GetResultQuestionRow(implicit e0: GR[Int], e1: GR[String]): GR[QuestionRow] = GR{
+    prs => import prs._
+    QuestionRow.tupled((<<[Int], <<[Int], <<[String]))
+  }
+  /** Table description of table question. Objects of this class serve as prototypes for rows in queries.
+   *  NOTE: The following names collided with Scala keywords and were escaped: type */
+  class Question(_tableTag: Tag) extends Table[QuestionRow](_tableTag, "question") {
+    def * = (id, `type`, prompt) <> (QuestionRow.tupled, QuestionRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), Rep.Some(`type`), Rep.Some(prompt)).shaped.<>({r=>import r._; _1.map(_=> QuestionRow.tupled((_1.get, _2.get, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(INT), AutoInc, PrimaryKey */
+    val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
+    /** Database column type SqlType(INT)
+     *  NOTE: The name was escaped because it collided with a Scala keyword. */
+    val `type`: Rep[Int] = column[Int]("type")
+    /** Database column prompt SqlType(TEXT) */
+    val prompt: Rep[String] = column[String]("prompt")
+  }
+  /** Collection-like TableQuery object for table Question */
+  lazy val Question = new TableQuery(tag => new Question(tag))
+
+  /** Entity class storing rows of table Quiz
+   *  @param id Database column id SqlType(INT), AutoInc, PrimaryKey
+   *  @param name Database column name SqlType(VARCHAR), Length(128,true), Default(None)
+   *  @param description Database column description SqlType(TEXT) */
+  case class QuizRow(id: Int, name: Option[String] = None, description: String)
+  /** GetResult implicit for fetching QuizRow objects using plain SQL queries */
+  implicit def GetResultQuizRow(implicit e0: GR[Int], e1: GR[Option[String]], e2: GR[String]): GR[QuizRow] = GR{
+    prs => import prs._
+    QuizRow.tupled((<<[Int], <<?[String], <<[String]))
+  }
+  /** Table description of table quiz. Objects of this class serve as prototypes for rows in queries. */
+  class Quiz(_tableTag: Tag) extends Table[QuizRow](_tableTag, "quiz") {
+    def * = (id, name, description) <> (QuizRow.tupled, QuizRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), name, Rep.Some(description)).shaped.<>({r=>import r._; _1.map(_=> QuizRow.tupled((_1.get, _2, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(INT), AutoInc, PrimaryKey */
+    val id: Rep[Int] = column[Int]("id", O.AutoInc, O.PrimaryKey)
+    /** Database column name SqlType(VARCHAR), Length(128,true), Default(None) */
+    val name: Rep[Option[String]] = column[Option[String]]("name", O.Length(128,varying=true), O.Default(None))
+    /** Database column description SqlType(TEXT) */
+    val description: Rep[String] = column[String]("description")
+  }
+  /** Collection-like TableQuery object for table Quiz */
+  lazy val Quiz = new TableQuery(tag => new Quiz(tag))
+
   /** Entity class storing rows of table QuizCourseCloseAssoc
    *  @param quizid Database column quizid SqlType(INT), Default(None)
    *  @param courseid Database column courseid SqlType(INT), Default(None)
@@ -406,6 +553,32 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table QuizCourseCloseAssoc */
   lazy val QuizCourseCloseAssoc = new TableQuery(tag => new QuizCourseCloseAssoc(tag))
+
+  /** Entity class storing rows of table QuizQuestion
+   *  @param quizId Database column quiz_id SqlType(INT), Default(None)
+   *  @param questionId Database column question_id SqlType(INT), Default(None) */
+  case class QuizQuestionRow(quizId: Option[Int] = None, questionId: Option[Int] = None)
+  /** GetResult implicit for fetching QuizQuestionRow objects using plain SQL queries */
+  implicit def GetResultQuizQuestionRow(implicit e0: GR[Option[Int]]): GR[QuizQuestionRow] = GR{
+    prs => import prs._
+    QuizQuestionRow.tupled((<<?[Int], <<?[Int]))
+  }
+  /** Table description of table quiz_question. Objects of this class serve as prototypes for rows in queries. */
+  class QuizQuestion(_tableTag: Tag) extends Table[QuizQuestionRow](_tableTag, "quiz_question") {
+    def * = (quizId, questionId) <> (QuizQuestionRow.tupled, QuizQuestionRow.unapply)
+
+    /** Database column quiz_id SqlType(INT), Default(None) */
+    val quizId: Rep[Option[Int]] = column[Option[Int]]("quiz_id", O.Default(None))
+    /** Database column question_id SqlType(INT), Default(None) */
+    val questionId: Rep[Option[Int]] = column[Option[Int]]("question_id", O.Default(None))
+
+    /** Foreign key referencing Question (database name quiz_question_ibfk_2) */
+    lazy val questionFk = foreignKey("quiz_question_ibfk_2", questionId, Question)(r => Rep.Some(r.id), onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    /** Foreign key referencing Quiz (database name quiz_question_ibfk_1) */
+    lazy val quizFk = foreignKey("quiz_question_ibfk_1", quizId, Quiz)(r => Rep.Some(r.id), onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  }
+  /** Collection-like TableQuery object for table QuizQuestion */
+  lazy val QuizQuestion = new TableQuery(tag => new QuizQuestion(tag))
 
   /** Entity class storing rows of table Quizzes
    *  @param quizid Database column quizid SqlType(INT), AutoInc, PrimaryKey
@@ -440,18 +613,19 @@ trait Tables {
    *  @param username Database column username SqlType(VARCHAR), Length(64,true)
    *  @param firstName Database column first_name SqlType(VARCHAR), Length(64,true), Default(None)
    *  @param lastName Database column last_name SqlType(VARCHAR), Length(64,true), Default(None)
-   *  @param avatarUrl Database column avatar_url SqlType(VARCHAR), Length(64,true), Default(None) */
-  case class UserRow(id: String, provider: String, email: String, username: String, firstName: Option[String] = None, lastName: Option[String] = None, avatarUrl: Option[String] = None)
+   *  @param avatarUrl Database column avatar_url SqlType(VARCHAR), Length(256,true), Default(None)
+   *  @param isInstructor Database column is_instructor SqlType(BIT), Default(Some(false)) */
+  case class UserRow(id: String, provider: String, email: String, username: String, firstName: Option[String] = None, lastName: Option[String] = None, avatarUrl: Option[String] = None, isInstructor: Option[Boolean] = Some(false))
   /** GetResult implicit for fetching UserRow objects using plain SQL queries */
-  implicit def GetResultUserRow(implicit e0: GR[String], e1: GR[Option[String]]): GR[UserRow] = GR{
+  implicit def GetResultUserRow(implicit e0: GR[String], e1: GR[Option[String]], e2: GR[Option[Boolean]]): GR[UserRow] = GR{
     prs => import prs._
-    UserRow.tupled((<<[String], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<?[String]))
+    UserRow.tupled((<<[String], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<?[String], <<?[Boolean]))
   }
   /** Table description of table user. Objects of this class serve as prototypes for rows in queries. */
   class User(_tableTag: Tag) extends Table[UserRow](_tableTag, "user") {
-    def * = (id, provider, email, username, firstName, lastName, avatarUrl) <> (UserRow.tupled, UserRow.unapply)
+    def * = (id, provider, email, username, firstName, lastName, avatarUrl, isInstructor) <> (UserRow.tupled, UserRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(provider), Rep.Some(email), Rep.Some(username), firstName, lastName, avatarUrl).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(provider), Rep.Some(email), Rep.Some(username), firstName, lastName, avatarUrl, isInstructor).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7, _8)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(VARCHAR), PrimaryKey, Length(24,true) */
     val id: Rep[String] = column[String]("id", O.PrimaryKey, O.Length(24,varying=true))
@@ -465,30 +639,32 @@ trait Tables {
     val firstName: Rep[Option[String]] = column[Option[String]]("first_name", O.Length(64,varying=true), O.Default(None))
     /** Database column last_name SqlType(VARCHAR), Length(64,true), Default(None) */
     val lastName: Rep[Option[String]] = column[Option[String]]("last_name", O.Length(64,varying=true), O.Default(None))
-    /** Database column avatar_url SqlType(VARCHAR), Length(64,true), Default(None) */
-    val avatarUrl: Rep[Option[String]] = column[Option[String]]("avatar_url", O.Length(64,varying=true), O.Default(None))
+    /** Database column avatar_url SqlType(VARCHAR), Length(256,true), Default(None) */
+    val avatarUrl: Rep[Option[String]] = column[Option[String]]("avatar_url", O.Length(256,varying=true), O.Default(None))
+    /** Database column is_instructor SqlType(BIT), Default(Some(false)) */
+    val isInstructor: Rep[Option[Boolean]] = column[Option[Boolean]]("is_instructor", O.Default(Some(false)))
   }
   /** Collection-like TableQuery object for table User */
   lazy val User = new TableQuery(tag => new User(tag))
 
   /** Entity class storing rows of table UserCourseAssoc
-   *  @param userid Database column userid SqlType(INT), Default(None)
+   *  @param userId Database column user_id SqlType(VARCHAR), Length(64,true), Default(None)
    *  @param courseid Database column courseid SqlType(INT), Default(None)
    *  @param role Database column role SqlType(INT) */
-  case class UserCourseAssocRow(userid: Option[Int] = None, courseid: Option[Int] = None, role: Int)
+  case class UserCourseAssocRow(userId: Option[String] = None, courseid: Option[Int] = None, role: Int)
   /** GetResult implicit for fetching UserCourseAssocRow objects using plain SQL queries */
-  implicit def GetResultUserCourseAssocRow(implicit e0: GR[Option[Int]], e1: GR[Int]): GR[UserCourseAssocRow] = GR{
+  implicit def GetResultUserCourseAssocRow(implicit e0: GR[Option[String]], e1: GR[Option[Int]], e2: GR[Int]): GR[UserCourseAssocRow] = GR{
     prs => import prs._
-    UserCourseAssocRow.tupled((<<?[Int], <<?[Int], <<[Int]))
+    UserCourseAssocRow.tupled((<<?[String], <<?[Int], <<[Int]))
   }
   /** Table description of table user_course_assoc. Objects of this class serve as prototypes for rows in queries. */
   class UserCourseAssoc(_tableTag: Tag) extends Table[UserCourseAssocRow](_tableTag, "user_course_assoc") {
-    def * = (userid, courseid, role) <> (UserCourseAssocRow.tupled, UserCourseAssocRow.unapply)
+    def * = (userId, courseid, role) <> (UserCourseAssocRow.tupled, UserCourseAssocRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (userid, courseid, Rep.Some(role)).shaped.<>({r=>import r._; _3.map(_=> UserCourseAssocRow.tupled((_1, _2, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (userId, courseid, Rep.Some(role)).shaped.<>({r=>import r._; _3.map(_=> UserCourseAssocRow.tupled((_1, _2, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
-    /** Database column userid SqlType(INT), Default(None) */
-    val userid: Rep[Option[Int]] = column[Option[Int]]("userid", O.Default(None))
+    /** Database column user_id SqlType(VARCHAR), Length(64,true), Default(None) */
+    val userId: Rep[Option[String]] = column[Option[String]]("user_id", O.Length(64,varying=true), O.Default(None))
     /** Database column courseid SqlType(INT), Default(None) */
     val courseid: Rep[Option[Int]] = column[Option[Int]]("courseid", O.Default(None))
     /** Database column role SqlType(INT) */
@@ -496,8 +672,9 @@ trait Tables {
 
     /** Foreign key referencing Courses (database name user_course_assoc_ibfk_2) */
     lazy val coursesFk = foreignKey("user_course_assoc_ibfk_2", courseid, Courses)(r => Rep.Some(r.courseid), onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
-    /** Foreign key referencing Users (database name user_course_assoc_ibfk_1) */
-    lazy val usersFk = foreignKey("user_course_assoc_ibfk_1", userid, Users)(r => Rep.Some(r.userid), onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+
+    /** Index over (userId) (database name userid) */
+    val index1 = index("userid", userId)
   }
   /** Collection-like TableQuery object for table UserCourseAssoc */
   lazy val UserCourseAssoc = new TableQuery(tag => new UserCourseAssoc(tag))

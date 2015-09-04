@@ -28,20 +28,17 @@ class UserServiceImpl @Inject()(dbConfigProvider: DatabaseConfigProvider) extend
   override def save(profile: CommonSocialProfile): Future[User] = {
     assert(profile.email.isDefined, "Attempting to save profile with empty email")
 
-    println(profile.email)
     val (email, username) = profile.email.map {
       case e@EmailPattern(u) => e -> u
       case _ => throw new InvalidAccountException
     }.get
-    println(email)
-    println(username)
 
     db.run(
-      Tables.User += Tables.UserRow(profile.loginInfo.providerKey, profile.loginInfo.providerID,
+      Tables.User insertOrUpdate Tables.UserRow(profile.loginInfo.providerKey, profile.loginInfo.providerID,
         email, username, profile.firstName, profile.lastName, profile.avatarURL)
     ).map { _ =>
       User(profile.loginInfo.providerKey, profile.loginInfo.providerID, email, username,
-           profile.firstName, profile.lastName, profile.avatarURL)
+        profile.firstName, profile.lastName, profile.avatarURL, isInstructor = false)
     }
   }
 
@@ -55,7 +52,8 @@ class UserServiceImpl @Inject()(dbConfigProvider: DatabaseConfigProvider) extend
       Tables.User.filter(_.id === loginInfo.providerKey).result.headOption
     ).map {
       _.map { u =>
-        User(u.id, u.provider, u.email, u.username, u.firstName, u.lastName, u.avatarUrl)
+        User(u.id, u.provider, u.email, u.username, u.firstName, u.lastName,
+          u.avatarUrl, u.isInstructor.getOrElse(false))
       }
     }
   }

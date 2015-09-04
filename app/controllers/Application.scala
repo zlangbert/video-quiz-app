@@ -1,23 +1,30 @@
 package controllers
 
-import play.api._
-import play.api.mvc._
-import play.api.data.Forms._
-import play.api.data.Form
-import models._
-import Tables._
-import play.api.db.slick.DatabaseConfigProvider
-import slick.driver.JdbcProfile
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 import java.sql.Timestamp
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.util.Date
-import java.time.format.DateTimeFormatter
-import java.time.LocalDateTime
-import java.time.ZonedDateTime
-import java.time.ZoneId
+import javax.inject.Inject
 
-class Application extends Controller {
+import auth.{WithRole, Role}
+import com.mohiva.play.silhouette.api.{Environment, Silhouette}
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import models.Tables._
+import models._
+import play.api._
+import play.api.data.Form
+import play.api.data.Forms._
+import play.api.db.slick.DatabaseConfigProvider
+import play.api.i18n.MessagesApi
+import play.api.mvc._
+import slick.driver.JdbcProfile
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+class Application @Inject()(val messagesApi: MessagesApi,
+                            val env: Environment[models.User, CookieAuthenticator])
+  extends Silhouette[models.User, CookieAuthenticator] {
+
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   import dbConfig.driver.api._
 
@@ -31,9 +38,8 @@ class Application extends Controller {
 
   // GET Actions
 
-  def quizList = AuthenticatedAction(implicit request => {
-    val uname = request.session.get("username").getOrElse("No name")
-    val uid = request.session.get("userid").getOrElse("-1").toInt
+  def quizList = SecuredAction.async { implicit request =>
+    val uid = request.identity.id
     val db = dbConfig.db
     val classes = Queries.coursesFor(uid, db)
     val quizzes = (for (s <- classes) yield {
@@ -55,29 +61,31 @@ class Application extends Controller {
       })
     }).flatMap(f => f)
     quizzes.map(qs => Ok(views.html.quizList(qs)))
-  })
+  }
 
-  def viewQuiz(quizid: Int) = AuthenticatedAction { implicit request =>
+  def viewQuiz(quizid: Int) = SecuredAction.async { implicit request =>
     {
       val quizData = Queries.quizData(quizid, request.session.get("userid").getOrElse("-1").toInt, dbConfig.db)
       quizData.map(qd => Ok(views.html.viewQuiz(qd)))
     }
   }
 
-  def takeQuiz(quizid: Int) = AuthenticatedAction { implicit request =>
+  def takeQuiz(quizid: Int) = SecuredAction.async { implicit request =>
     {
       val quizData = Queries.quizData(quizid, request.session.get("userid").getOrElse("-1").toInt, dbConfig.db)
       quizData.map(qd => Ok(views.html.takeQuiz(qd)))
     }
   }
 
-  def fetch(user: String) = AuthenticatedAction { implicit request =>
-    Queries.fetchUserByName(user, dbConfig.db).map(user => Ok(Queries.coursesFor(user.userid, dbConfig.db).toString()))
+  def fetch(user: String) = SecuredAction.async { implicit request =>
+    val userId = request.identity.id
+    Queries.fetchUserByName(user, dbConfig.db).map(user => Ok(Queries.coursesFor(userId, dbConfig.db).toString()))
   }
 
-  def instructorPage = AuthenticatedInstructorAction { implicit request =>
+  def instructorPage = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     val db = dbConfig.db
-    val courses = Queries.instructorCourseRows(request.session.get("userid").get.toInt, db)
+    val userId = request.identity.id
+    val courses = Queries.instructorCourseRows(userId, db)
     val quizzes = db.run(Quizzes.result)
     val mcQuestions = db.run(MultipleChoiceQuestions.result)
     val funcQuestions = db.run(FunctionQuestions.result)
@@ -95,7 +103,7 @@ class Application extends Controller {
     }
   }
 
-  def editQuiz(quizid: Int) = AuthenticatedInstructorAction { implicit request =>
+  def editQuiz(quizid: Int) = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     if (quizid < 1) {
       Future { Ok(views.html.editQuiz(QuizzesRow(quizid, null, null), false, Nil)) }
     } else {
@@ -113,7 +121,7 @@ class Application extends Controller {
     }
   }
 
-  def multipleChoiceEdit(id: Int) = AuthenticatedInstructorAction { implicit requext =>
+  def multipleChoiceEdit(id: Int) = SecuredAction(WithRole(Role.Instructor)).async { implicit requext =>
     if (id < 1) {
       Future { Ok(views.html.multipleChoiceEdit(MultipleChoice(id, "", Nil, -1))) }
     } else {
@@ -129,16 +137,16 @@ class Application extends Controller {
 
   def writeExpressionEdit(id: Int) = TODO
 
-  def addCourse = AuthenticatedInstructorAction { implicit request =>
+  def addCourse = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     Future { Ok(views.html.addCourse(newCourseForm)) }
   }
 
-  def viewCourse(courseid: Int) = AuthenticatedInstructorAction { implicit request =>
+  def viewCourse(courseid: Int) = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     Queries.loadCourseData(courseid, dbConfig.db).map(cd => Ok(views.html.viewCourse(cd)))
   } 
 
   def setupDatabase = Action { implicit request =>
-    dbConfig.db.run(Users.filter(_.username === "mlewis").result).map(s =>
+    /*dbConfig.db.run(Users.filter(_.username === "mlewis").result).map(s =>
       if (s.isEmpty) {
         dbConfig.db.run(DBIO.seq(
           Users += UsersRow(0, "mlewist", "0123456"),
@@ -168,12 +176,13 @@ class Application extends Controller {
           CodeAnswers += CodeAnswersRow(Some(1), Some(1), 1, 1, "code", false),
           CodeAnswers += CodeAnswersRow(Some(1), Some(1), 1, 1, "code", true)))
       })
-    Ok("Setup complete")
+    Ok("Setup complete")*/
+    ???
   }
 
   // POST Actions
 
-  def submitQuiz = AuthenticatedAction { implicit request =>
+  def submitQuiz = SecuredAction.async { implicit request =>
     {
       val db = dbConfig.db
       val userid = request.session("userid").toInt
@@ -201,22 +210,24 @@ class Application extends Controller {
     }
   }
 
-  def addCoursePost = AuthenticatedInstructorAction { implicit request =>
-    {
-      newCourseForm.bindFromRequest().fold(
-        formWithErrors => {
-          Future { Ok(views.html.addCourse(formWithErrors)) }
-        },
-        value => {
-          val db = dbConfig.db
-          val userid = request.session("userid").toInt
-          Queries.addCourse(value, userid, db)
-          Future { Redirect(routes.Application.instructorPage) }
-        })
-    }
+  def addCoursePost = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
+    val userId = request.identity.id
+    newCourseForm.bindFromRequest().fold(
+      formWithErrors => {
+        Future {
+          Ok(views.html.addCourse(formWithErrors))
+        }
+      },
+      value => {
+        val db = dbConfig.db
+        Queries.addCourse(value, userId, db)
+        Future {
+          Redirect(routes.Application.instructorPage)
+        }
+      })
   }
 
-  def editQuizPost = AuthenticatedInstructorAction { implicit request =>
+  def editQuizPost = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     val db = dbConfig.db
     val userid = request.session("userid").toInt
     request.body.asFormUrlEncoded match {
@@ -235,7 +246,7 @@ class Application extends Controller {
     }
   }
 
-  def multipleChoiceEditPost = AuthenticatedInstructorAction { implicit request =>
+  def multipleChoiceEditPost = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     val db = dbConfig.db
     val userid = request.session("userid").toInt
     request.body.asFormUrlEncoded match {
@@ -259,7 +270,7 @@ class Application extends Controller {
 
   // AJAX Calls
 
-  def associateMCQuestionWithQuiz(questionid: Int, quizid: Int) = AuthenticatedInstructorAction { implicit request =>
+  def associateMCQuestionWithQuiz(questionid: Int, quizid: Int) = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     dbConfig.db.run(MultipleChoiceAssoc += MultipleChoiceAssocRow(Some(quizid), Some(questionid)))
     Future { Ok("good") }
   }
@@ -270,14 +281,14 @@ class Application extends Controller {
 
   def associateExprQuestionWithQuiz(questionid: Int, quizid: Int) = TODO
 
-  def associateQuizWithCourse(quizid: Int, courseid: Int, dateTime: String) = AuthenticatedInstructorAction { implicit request =>
+  def associateQuizWithCourse(quizid: Int, courseid: Int, dateTime: String) = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     val zoneId = ZoneId.of("America/Chicago")
     val time = Timestamp.from(java.time.Instant.from(ZonedDateTime.of(LocalDateTime.parse(dateTime), zoneId)))
     dbConfig.db.run(QuizCourseCloseAssoc += QuizCourseCloseAssocRow(Some(quizid), Some(courseid), time))
     Future { Ok("good") }
   }
 
-  def createUser(username: String, id: String) = AuthenticatedInstructorAction { implicit request =>
+  def createUser(username: String, id: String) = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     val db = dbConfig.db
     db.run(Users.filter(_.username === username).result).foreach(s => {
       if (s.isEmpty) db.run(Users += UsersRow(0, username, id))
@@ -285,7 +296,7 @@ class Application extends Controller {
     Future { Ok("good") }
   }
 
-  def removeQuestionQuizAssoc(questionid: Int, questionType: Int, quizid: Int) = AuthenticatedInstructorAction { implicit request =>
+  def removeQuestionQuizAssoc(questionid: Int, questionType: Int, quizid: Int) = SecuredAction(WithRole(Role.Instructor)).async { implicit request =>
     println("Associate mc question " + questionid + " with " + quizid)
     val db = dbConfig.db
     import slick.driver.MySQLDriver.api._
@@ -300,41 +311,5 @@ class Application extends Controller {
         db.run(ExpressionAssoc.filter(a => a.exprQuestionId === questionid && a.quizid === quizid).delete)
     }
     Future { Ok("good") }
-  }
-
-  // Other methods
-
-  private def authenticate(request: Request[AnyContent]): Boolean = {
-    request.session.get("username") match {
-      case None => false
-      case Some(uname) => true
-    }
-  }
-
-  private def isInstructor(request: Request[AnyContent]): Boolean = {
-    request.session.get("instructor") match {
-      case Some("yes") => true
-      case _ => false
-    }
-  }
-
-  private def AuthenticatedAction(f: Request[AnyContent] => Future[Result]): Action[AnyContent] = {
-    Action.async { request =>
-      if (authenticate(request)) {
-        f(request)
-      } else {
-        Future { Redirect(routes.ApplicationController.index()) }
-      }
-    }
-  }
-
-  private def AuthenticatedInstructorAction(f: Request[AnyContent] => Future[Result]): Action[AnyContent] = {
-    Action.async { request =>
-      if (authenticate(request) && isInstructor(request)) {
-        f(request)
-      } else {
-        Future { Redirect(routes.ApplicationController.index()) }
-      }
-    }
   }
 }

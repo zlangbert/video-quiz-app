@@ -14,7 +14,7 @@ import java.sql.Timestamp
  * @author mlewis
  */
 object AddTestData extends App {
-    println("Get database")
+    /*println("Get database")
 //    val db = Database.forConfig("slick.dbs.default")
     val db = Database.forURL("jdbc:mysql://localhost/video_quizzes", user="mlewis", password="password", driver="com.mysql.jdbc.Driver")
     Await.result(db.run(DBIO.seq(
@@ -66,7 +66,7 @@ object AddTestData extends App {
       CodeAnswers += CodeAnswersRow(Some(1),Some(1),1,1,"code",false),
       CodeAnswers += CodeAnswersRow(Some(1),Some(1),1,1,"code",true)
     )), Duration.Inf)
-    db.close()
+    db.close()*/
   
   
 }

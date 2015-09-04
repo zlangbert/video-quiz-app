@@ -8,4 +8,5 @@ case class User(id: String,
                 username: String,
                 firstName: Option[String],
                 lastName: Option[String],
-                avatarUrl: Option[String]) extends Identity
+                avatarUrl: Option[String],
+                isInstructor: Boolean) extends Identity
