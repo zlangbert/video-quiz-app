@@ -3,20 +3,22 @@ package services.impl
 import javax.inject.Inject
 
 import com.mohiva.play.silhouette.api.LoginInfo
-import com.mohiva.play.silhouette.impl.User
 import com.mohiva.play.silhouette.impl.providers.CommonSocialProfile
-import models.Tables
+import models.{Tables, User}
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.libs.concurrent.Execution.Implicits._
 import services.UserService
+import services.UserService.InvalidAccountException
 import slick.driver.JdbcProfile
 
 import scala.concurrent.Future
 
 class UserServiceImpl @Inject()(dbConfigProvider: DatabaseConfigProvider) extends UserService {
 
-  val profile = dbConfigProvider.get[JdbcProfile]
-  val db = profile.db
+  private val EmailPattern = """^(\w{2,8}\d{0,2})@trinity\.edu$""".r
+
+  private val profile = dbConfigProvider.get[JdbcProfile]
+  private val db = profile.db
 
   import profile.driver.api._
 
@@ -26,13 +28,20 @@ class UserServiceImpl @Inject()(dbConfigProvider: DatabaseConfigProvider) extend
   override def save(profile: CommonSocialProfile): Future[User] = {
     assert(profile.email.isDefined, "Attempting to save profile with empty email")
 
-    val user = User(profile.loginInfo, profile.firstName, profile.lastName, profile.fullName,
-      profile.email, profile.avatarURL)
+    println(profile.email)
+    val (email, username) = profile.email.map {
+      case e@EmailPattern(u) => e -> u
+      case _ => throw new InvalidAccountException
+    }.get
+    println(email)
+    println(username)
+
     db.run(
       Tables.User += Tables.UserRow(profile.loginInfo.providerKey, profile.loginInfo.providerID,
-        profile.email.get, profile.firstName, profile.lastName)
+        email, username, profile.firstName, profile.lastName, profile.avatarURL)
     ).map { _ =>
-      user
+      User(profile.loginInfo.providerKey, profile.loginInfo.providerID, email, username,
+           profile.firstName, profile.lastName, profile.avatarURL)
     }
   }
 
@@ -46,7 +55,7 @@ class UserServiceImpl @Inject()(dbConfigProvider: DatabaseConfigProvider) extend
       Tables.User.filter(_.id === loginInfo.providerKey).result.headOption
     ).map {
       _.map { u =>
-        User(LoginInfo(u.provider, u.id), u.firstName, u.lastName, None, Option(u.email), None)
+        User(u.id, u.provider, u.email, u.username, u.firstName, u.lastName, u.avatarUrl)
       }
     }
   }

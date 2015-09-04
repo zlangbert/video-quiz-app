@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema = Array(CodeAnswers.schema, Courses.schema, ExpressionAssoc.schema, ExpressionQuestions.schema, FunctionAssoc.schema, FunctionQuestions.schema, LambdaAssoc.schema, LambdaQuestions.schema, McAnswers.schema, MultipleChoiceAssoc.schema, MultipleChoiceQuestions.schema, PlayEvolutions.schema, QuizCourseCloseAssoc.schema, Quizzes.schema, User.schema, UserCourseAssoc.schema, Users.schema, VariableSpecifications.schema).reduceLeft(_ ++ _)
+  lazy val schema = Array(CodeAnswers.schema, Courses.schema, ExpressionAssoc.schema, ExpressionQuestions.schema, FunctionAssoc.schema, FunctionQuestions.schema, LambdaAssoc.schema, LambdaQuestions.schema, McAnswers.schema, MultipleChoiceAssoc.schema, MultipleChoiceQuestions.schema, QuizCourseCloseAssoc.schema, Quizzes.schema, User.schema, UserCourseAssoc.schema, Users.schema, VariableSpecifications.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -328,15 +328,15 @@ trait Tables {
 
   /** Entity class storing rows of table MultipleChoiceQuestions
    *  @param mcQuestionId Database column mc_question_id SqlType(INT), AutoInc, PrimaryKey
-   *  @param prompt Database column prompt SqlType(VARCHAR), Length(4000,true)
-   *  @param option1 Database column option1 SqlType(VARCHAR), Length(4000,true)
-   *  @param option2 Database column option2 SqlType(VARCHAR), Length(4000,true)
-   *  @param option3 Database column option3 SqlType(VARCHAR), Length(4000,true), Default(None)
-   *  @param option4 Database column option4 SqlType(VARCHAR), Length(4000,true), Default(None)
-   *  @param option5 Database column option5 SqlType(VARCHAR), Length(4000,true), Default(None)
-   *  @param option6 Database column option6 SqlType(VARCHAR), Length(4000,true), Default(None)
-   *  @param option7 Database column option7 SqlType(VARCHAR), Length(4000,true), Default(None)
-   *  @param option8 Database column option8 SqlType(VARCHAR), Length(4000,true), Default(None)
+   *  @param prompt Database column prompt SqlType(TEXT)
+   *  @param option1 Database column option1 SqlType(TEXT)
+   *  @param option2 Database column option2 SqlType(TEXT)
+   *  @param option3 Database column option3 SqlType(TEXT), Default(None)
+   *  @param option4 Database column option4 SqlType(TEXT), Default(None)
+   *  @param option5 Database column option5 SqlType(TEXT), Default(None)
+   *  @param option6 Database column option6 SqlType(TEXT), Default(None)
+   *  @param option7 Database column option7 SqlType(TEXT), Default(None)
+   *  @param option8 Database column option8 SqlType(TEXT), Default(None)
    *  @param correctOption Database column correct_option SqlType(INT) */
   case class MultipleChoiceQuestionsRow(mcQuestionId: Int, prompt: String, option1: String, option2: String, option3: Option[String] = None, option4: Option[String] = None, option5: Option[String] = None, option6: Option[String] = None, option7: Option[String] = None, option8: Option[String] = None, correctOption: Int)
   /** GetResult implicit for fetching MultipleChoiceQuestionsRow objects using plain SQL queries */
@@ -352,67 +352,29 @@ trait Tables {
 
     /** Database column mc_question_id SqlType(INT), AutoInc, PrimaryKey */
     val mcQuestionId: Rep[Int] = column[Int]("mc_question_id", O.AutoInc, O.PrimaryKey)
-    /** Database column prompt SqlType(VARCHAR), Length(4000,true) */
-    val prompt: Rep[String] = column[String]("prompt", O.Length(4000,varying=true))
-    /** Database column option1 SqlType(VARCHAR), Length(4000,true) */
-    val option1: Rep[String] = column[String]("option1", O.Length(4000,varying=true))
-    /** Database column option2 SqlType(VARCHAR), Length(4000,true) */
-    val option2: Rep[String] = column[String]("option2", O.Length(4000,varying=true))
-    /** Database column option3 SqlType(VARCHAR), Length(4000,true), Default(None) */
-    val option3: Rep[Option[String]] = column[Option[String]]("option3", O.Length(4000,varying=true), O.Default(None))
-    /** Database column option4 SqlType(VARCHAR), Length(4000,true), Default(None) */
-    val option4: Rep[Option[String]] = column[Option[String]]("option4", O.Length(4000,varying=true), O.Default(None))
-    /** Database column option5 SqlType(VARCHAR), Length(4000,true), Default(None) */
-    val option5: Rep[Option[String]] = column[Option[String]]("option5", O.Length(4000,varying=true), O.Default(None))
-    /** Database column option6 SqlType(VARCHAR), Length(4000,true), Default(None) */
-    val option6: Rep[Option[String]] = column[Option[String]]("option6", O.Length(4000,varying=true), O.Default(None))
-    /** Database column option7 SqlType(VARCHAR), Length(4000,true), Default(None) */
-    val option7: Rep[Option[String]] = column[Option[String]]("option7", O.Length(4000,varying=true), O.Default(None))
-    /** Database column option8 SqlType(VARCHAR), Length(4000,true), Default(None) */
-    val option8: Rep[Option[String]] = column[Option[String]]("option8", O.Length(4000,varying=true), O.Default(None))
+    /** Database column prompt SqlType(TEXT) */
+    val prompt: Rep[String] = column[String]("prompt")
+    /** Database column option1 SqlType(TEXT) */
+    val option1: Rep[String] = column[String]("option1")
+    /** Database column option2 SqlType(TEXT) */
+    val option2: Rep[String] = column[String]("option2")
+    /** Database column option3 SqlType(TEXT), Default(None) */
+    val option3: Rep[Option[String]] = column[Option[String]]("option3", O.Default(None))
+    /** Database column option4 SqlType(TEXT), Default(None) */
+    val option4: Rep[Option[String]] = column[Option[String]]("option4", O.Default(None))
+    /** Database column option5 SqlType(TEXT), Default(None) */
+    val option5: Rep[Option[String]] = column[Option[String]]("option5", O.Default(None))
+    /** Database column option6 SqlType(TEXT), Default(None) */
+    val option6: Rep[Option[String]] = column[Option[String]]("option6", O.Default(None))
+    /** Database column option7 SqlType(TEXT), Default(None) */
+    val option7: Rep[Option[String]] = column[Option[String]]("option7", O.Default(None))
+    /** Database column option8 SqlType(TEXT), Default(None) */
+    val option8: Rep[Option[String]] = column[Option[String]]("option8", O.Default(None))
     /** Database column correct_option SqlType(INT) */
     val correctOption: Rep[Int] = column[Int]("correct_option")
   }
   /** Collection-like TableQuery object for table MultipleChoiceQuestions */
   lazy val MultipleChoiceQuestions = new TableQuery(tag => new MultipleChoiceQuestions(tag))
-
-  /** Entity class storing rows of table PlayEvolutions
-   *  @param id Database column id SqlType(INT), PrimaryKey
-   *  @param hash Database column hash SqlType(VARCHAR), Length(255,true)
-   *  @param appliedAt Database column applied_at SqlType(TIMESTAMP)
-   *  @param applyScript Database column apply_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None)
-   *  @param revertScript Database column revert_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None)
-   *  @param state Database column state SqlType(VARCHAR), Length(255,true), Default(None)
-   *  @param lastProblem Database column last_problem SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
-  case class PlayEvolutionsRow(id: Int, hash: String, appliedAt: java.sql.Timestamp, applyScript: Option[String] = None, revertScript: Option[String] = None, state: Option[String] = None, lastProblem: Option[String] = None)
-  /** GetResult implicit for fetching PlayEvolutionsRow objects using plain SQL queries */
-  implicit def GetResultPlayEvolutionsRow(implicit e0: GR[Int], e1: GR[String], e2: GR[java.sql.Timestamp], e3: GR[Option[String]]): GR[PlayEvolutionsRow] = GR{
-    prs => import prs._
-    PlayEvolutionsRow.tupled((<<[Int], <<[String], <<[java.sql.Timestamp], <<?[String], <<?[String], <<?[String], <<?[String]))
-  }
-  /** Table description of table play_evolutions. Objects of this class serve as prototypes for rows in queries. */
-  class PlayEvolutions(_tableTag: Tag) extends Table[PlayEvolutionsRow](_tableTag, "play_evolutions") {
-    def * = (id, hash, appliedAt, applyScript, revertScript, state, lastProblem) <> (PlayEvolutionsRow.tupled, PlayEvolutionsRow.unapply)
-    /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(hash), Rep.Some(appliedAt), applyScript, revertScript, state, lastProblem).shaped.<>({r=>import r._; _1.map(_=> PlayEvolutionsRow.tupled((_1.get, _2.get, _3.get, _4, _5, _6, _7)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
-
-    /** Database column id SqlType(INT), PrimaryKey */
-    val id: Rep[Int] = column[Int]("id", O.PrimaryKey)
-    /** Database column hash SqlType(VARCHAR), Length(255,true) */
-    val hash: Rep[String] = column[String]("hash", O.Length(255,varying=true))
-    /** Database column applied_at SqlType(TIMESTAMP) */
-    val appliedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("applied_at")
-    /** Database column apply_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
-    val applyScript: Rep[Option[String]] = column[Option[String]]("apply_script", O.Length(16777215,varying=true), O.Default(None))
-    /** Database column revert_script SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
-    val revertScript: Rep[Option[String]] = column[Option[String]]("revert_script", O.Length(16777215,varying=true), O.Default(None))
-    /** Database column state SqlType(VARCHAR), Length(255,true), Default(None) */
-    val state: Rep[Option[String]] = column[Option[String]]("state", O.Length(255,varying=true), O.Default(None))
-    /** Database column last_problem SqlType(MEDIUMTEXT), Length(16777215,true), Default(None) */
-    val lastProblem: Rep[Option[String]] = column[Option[String]]("last_problem", O.Length(16777215,varying=true), O.Default(None))
-  }
-  /** Collection-like TableQuery object for table PlayEvolutions */
-  lazy val PlayEvolutions = new TableQuery(tag => new PlayEvolutions(tag))
 
   /** Entity class storing rows of table QuizCourseCloseAssoc
    *  @param quizid Database column quizid SqlType(INT), Default(None)
@@ -475,19 +437,21 @@ trait Tables {
    *  @param id Database column id SqlType(VARCHAR), PrimaryKey, Length(24,true)
    *  @param provider Database column provider SqlType(VARCHAR), Length(24,true)
    *  @param email Database column email SqlType(VARCHAR), Length(64,true)
+   *  @param username Database column username SqlType(VARCHAR), Length(64,true)
    *  @param firstName Database column first_name SqlType(VARCHAR), Length(64,true), Default(None)
-   *  @param lastName Database column last_name SqlType(VARCHAR), Length(64,true), Default(None) */
-  case class UserRow(id: String, provider: String, email: String, firstName: Option[String] = None, lastName: Option[String] = None)
+   *  @param lastName Database column last_name SqlType(VARCHAR), Length(64,true), Default(None)
+   *  @param avatarUrl Database column avatar_url SqlType(VARCHAR), Length(64,true), Default(None) */
+  case class UserRow(id: String, provider: String, email: String, username: String, firstName: Option[String] = None, lastName: Option[String] = None, avatarUrl: Option[String] = None)
   /** GetResult implicit for fetching UserRow objects using plain SQL queries */
   implicit def GetResultUserRow(implicit e0: GR[String], e1: GR[Option[String]]): GR[UserRow] = GR{
     prs => import prs._
-    UserRow.tupled((<<[String], <<[String], <<[String], <<?[String], <<?[String]))
+    UserRow.tupled((<<[String], <<[String], <<[String], <<[String], <<?[String], <<?[String], <<?[String]))
   }
   /** Table description of table user. Objects of this class serve as prototypes for rows in queries. */
   class User(_tableTag: Tag) extends Table[UserRow](_tableTag, "user") {
-    def * = (id, provider, email, firstName, lastName) <> (UserRow.tupled, UserRow.unapply)
+    def * = (id, provider, email, username, firstName, lastName, avatarUrl) <> (UserRow.tupled, UserRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(provider), Rep.Some(email), firstName, lastName).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2.get, _3.get, _4, _5)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(provider), Rep.Some(email), Rep.Some(username), firstName, lastName, avatarUrl).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6, _7)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(VARCHAR), PrimaryKey, Length(24,true) */
     val id: Rep[String] = column[String]("id", O.PrimaryKey, O.Length(24,varying=true))
@@ -495,10 +459,14 @@ trait Tables {
     val provider: Rep[String] = column[String]("provider", O.Length(24,varying=true))
     /** Database column email SqlType(VARCHAR), Length(64,true) */
     val email: Rep[String] = column[String]("email", O.Length(64,varying=true))
+    /** Database column username SqlType(VARCHAR), Length(64,true) */
+    val username: Rep[String] = column[String]("username", O.Length(64,varying=true))
     /** Database column first_name SqlType(VARCHAR), Length(64,true), Default(None) */
     val firstName: Rep[Option[String]] = column[Option[String]]("first_name", O.Length(64,varying=true), O.Default(None))
     /** Database column last_name SqlType(VARCHAR), Length(64,true), Default(None) */
     val lastName: Rep[Option[String]] = column[Option[String]]("last_name", O.Length(64,varying=true), O.Default(None))
+    /** Database column avatar_url SqlType(VARCHAR), Length(64,true), Default(None) */
+    val avatarUrl: Rep[Option[String]] = column[Option[String]]("avatar_url", O.Length(64,varying=true), O.Default(None))
   }
   /** Collection-like TableQuery object for table User */
   lazy val User = new TableQuery(tag => new User(tag))

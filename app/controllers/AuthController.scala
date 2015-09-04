@@ -5,13 +5,14 @@ import javax.inject.Inject
 import com.mohiva.play.silhouette.api.exceptions.ProviderException
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.api.{Environment, Logger, LoginEvent, Silhouette}
-import com.mohiva.play.silhouette.impl.User
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import com.mohiva.play.silhouette.impl.providers.{CommonSocialProfileBuilder, SocialProvider, SocialProviderRegistry}
+import models.User
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
 import services.UserService
+import services.UserService.InvalidAccountException
 
 import scala.concurrent.Future
 
@@ -45,6 +46,7 @@ class AuthController @Inject()(val messagesApi: MessagesApi,
         }
       case _ => Future.failed(new ProviderException(s"Cannot authenticate with unexpected social provider $provider"))
     }).recover {
+      case e: InvalidAccountException => Ok("nope")
       case e: ProviderException =>
         logger.error("Unexpected provider error", e)
         Redirect(routes.ApplicationController.index())

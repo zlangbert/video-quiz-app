@@ -3,8 +3,8 @@ package controllers
 import javax.inject.Inject
 
 import com.mohiva.play.silhouette.api.{Environment, Silhouette}
-import com.mohiva.play.silhouette.impl.User
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import models.User
 import play.api.i18n.MessagesApi
 import services.QuizService
 
