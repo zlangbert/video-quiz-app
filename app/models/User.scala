@@ -10,3 +10,10 @@ case class User(id: String,
                 lastName: Option[String],
                 avatarUrl: Option[String],
                 isInstructor: Boolean) extends Identity
+
+object User {
+
+  implicit class UserOps(user: User) {
+    def name: String = user.firstName.getOrElse("") + " " + user.lastName.getOrElse("")
+  }
+}

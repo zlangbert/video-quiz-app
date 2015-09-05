@@ -60,7 +60,8 @@ class Application @Inject()(val messagesApi: MessagesApi,
         quizTuple.map(qt => (c.code + "-" + c.section + "-" + c.semester, qt._1, qt._2))
       })
     }).flatMap(f => f)
-    quizzes.map(qs => Ok(views.html.quizList(qs)))
+    //quizzes.map(qs => Ok(views.html.quizList(qs)))
+    ???
   }
 
   def viewQuiz(quizid: Int) = SecuredAction.async { implicit request =>

@@ -24,7 +24,7 @@ class AuthController @Inject()(val messagesApi: MessagesApi,
   extends Silhouette[User, CookieAuthenticator] with Logger {
 
   def login = Action { implicit request =>
-    Ok(views.html.login())
+    Ok(views.html.v2.login())
   }
 
   def authenticate(provider: String) = Action.async { implicit request =>

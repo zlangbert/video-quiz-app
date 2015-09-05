@@ -1,0 +1,13 @@
+@(title: String)(content: Html)(implicit user: User)
+
+@v2.main(title) {
+
+    <div id="root" class="container">
+        @v2.header()
+        <main class="well">
+            @content
+        </main>
+    </div>
+
+    @v2.footer()
+}

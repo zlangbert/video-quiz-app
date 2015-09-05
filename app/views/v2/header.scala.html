@@ -1,0 +1,14 @@
+@()(implicit user: User)
+
+<header class="well">
+    <section>
+        <h2>Video Quizzes</h2>
+    </section>
+    <section class="user">
+        <h3>@user.name</h3>
+        @user.avatarUrl.map { url =>
+            <img src="@url">
+        }
+    </section>
+
+</header>

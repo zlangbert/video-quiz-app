@@ -28,7 +28,7 @@ class OAuth2InfoDAO extends DelegableAuthInfoDAO[OAuth2Info] {
   }
 
   /**
-   * Adds new auth info for the given login info.
+   * Adds v2 auth info for the given login info.
    *
    * @param loginInfo The login info for which the auth info should be added.
    * @param authInfo The auth info to add.
