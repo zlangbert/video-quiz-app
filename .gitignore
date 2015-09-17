@@ -1,10 +1,41 @@
-logs
-target
-/.idea
-/.idea_modules
-/.classpath
-/.project
-/.settings
-.sbtserver
-/RUNNING_PID
-.cache*
+# Created by https://www.gitignore.io/api/sbt,playframework,vagrant,intellij
+
+### SBT ###
+# Simple Build Tool
+# http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html#configuring-version-control
+
+target/
+lib_managed/
+src_managed/
+project/boot/
+.history
+.cache
+
+
+### PlayFramework ###
+# Ignore Play! working directory #
+bin/
+/db
+.eclipse
+/lib/
+/logs/
+/modules
+/project/project
+/project/target
+/target
+tmp/
+test-result
+server.pid
+*.iml
+*.eml
+/dist/
+.cache
+
+
+### Vagrant ###
+.vagrant/
+
+
+### Intellij ###
+*.iml
+.idea/
