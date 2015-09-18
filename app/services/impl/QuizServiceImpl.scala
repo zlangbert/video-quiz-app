@@ -20,10 +20,29 @@ class QuizServiceImpl @Inject()(dbConfigProvider: DatabaseConfigProvider) extend
 
   import dbConfig.driver.api._
 
+  /**
+   * Gets all the quiz info for a user
+   * @param user The user to get info for
+   * @return A map of course to their quiz info
+   *
+   * @note This whole thing is probably sub-optimal. There is most likely a way to
+   *       reduce the number of queries run.
+   */
   override def forUser(user: models.User): Future[Map[CourseRow, CourseQuizzes]] = {
 
+    /**
+     * Converts db quiz data to our model
+     */
     def toCourseQuizMap(data: Seq[(CourseRow, QuizRow, CourseQuizRow)],
                         scores: Map[Int, (Int, Int)]): Map[CourseRow, CourseQuizzes] = {
+
+      def toQuizInfo(data: (CourseRow, QuizRow, CourseQuizRow), scores: Map[Int, (Int, Int)]): UserQuizInfo = {
+        val (_, quiz, cq) = data
+        val score = scores.getOrElse(quiz.id, -1 -> -1)
+        UserQuizInfo(quiz.id, quiz.name, quiz.description,
+          cq.openTime.toLocalDateTime, cq.closeTime.toLocalDateTime, score)
+      }
+
       val now = LocalDateTime.now()
       data.groupBy(_._1).map { case (course, quizzes) =>
         val (open, closed) = quizzes.partition { case (_, quiz, courseQuiz) =>
@@ -37,29 +56,38 @@ class QuizServiceImpl @Inject()(dbConfigProvider: DatabaseConfigProvider) extend
       }
     }
 
-    def toQuizInfo(data: (CourseRow, QuizRow, CourseQuizRow), scores: Map[Int, (Int, Int)]): UserQuizInfo = {
-      val (_, quiz, cq) = data
-      val score = scores.getOrElse(quiz.id, -1 -> -1)
-      UserQuizInfo(quiz.id, quiz.name, quiz.description,
-        cq.openTime.toLocalDateTime, cq.closeTime.toLocalDateTime, score)
+    /**
+     * Gets the number of questions for each quiz
+     */
+    def numQuestions(data: Seq[(Tables.CourseRow, Tables.QuizRow, Tables.CourseQuizRow)]) = {
+
+      def forQuiz(quizId: Int) = (for {
+        qq <- Tables.QuizQuestion if qq.quizId === quizId
+        q <- qq.questionFk
+      } yield qq -> q).groupBy(_._1.quizId).map { case (qi, group) =>
+        qi -> group.map(_._2).length
+      }.result
+
+      data.map { case (_, q, _) =>
+        forQuiz(q.id)
+      }
     }
 
-    def numQuestions(quizId: Int) = (for {
-      qq <- Tables.QuizQuestion if qq.quizId === quizId
-      q <- qq.questionFk
-    } yield qq -> q).groupBy(_._1.quizId).map { case (_, css) =>
-      css.map(_._2).length
-    }.result
+    /**
+     * Gets the number of correct questions for each quiz
+     */
+    def numCorrect(data: Seq[(Tables.CourseRow, Tables.QuizRow, Tables.CourseQuizRow)]) = {
 
-    /*val scores = (for {
-      userQuiz <- Tables.UserQuiz if userQuiz.userId === user.id
-      quiz <- userQuiz.quizFk
-      answer <- Tables.Answer if answer.userId === user.id && answer.quizId === quiz.id
-    } yield (quiz, answer)).groupBy(_._1).map { case (quiz, css) =>
-      val correct = css.map(_._2).filter(_.isCorrect).length
-      val total = css.map(_._2).length
-      (quiz.id, (correct, total))
-    }.result*/
+      def forQuiz(quizId: Int) = (for {
+        a <- Tables.Answer if a.userId === user.id && a.quizId === quizId && a.isCorrect === true
+      } yield a).groupBy(_.quizId).map { case (qi, group) =>
+        qi -> group.length
+      }.result
+
+      data.map { case (_, q, _) =>
+        forQuiz(q.id)
+      }
+    }
 
     val quizData = (for {
       userCourse <- Tables.UserCourse if userCourse.userId === user.id
@@ -68,14 +96,18 @@ class QuizServiceImpl @Inject()(dbConfigProvider: DatabaseConfigProvider) extend
       userQuiz <- Tables.UserQuiz if courseQuiz.quizId === userQuiz.quizId
       quiz <- userQuiz.quizFk
     } yield (course, quiz, courseQuiz)).result
-    quizData.statements.foreach(println)
 
     db run {
       (for {
-        //s <- scores
-        q <- quizData
+        data <- quizData
+        numQuestions <- DBIO.sequence(numQuestions(data)).transactionally
+        numCorrect <- DBIO.sequence(numCorrect(data))
       } yield {
-        toCourseQuizMap(q, Map.empty)
+          val numCorrectMap = numCorrect.flatten.toMap
+          val scores = numQuestions.flatten.toMap.map { case (quizId, nc) =>
+            (quizId, (numCorrectMap.getOrElse(quizId, 0), nc))
+          }
+        toCourseQuizMap(data, scores)
       }).transactionally
     }
   }

@@ -75,6 +75,15 @@ CREATE TABLE answer (
   FOREIGN KEY (question_id) REFERENCES question (id)
 );
 
+INSERT INTO user VALUE ('108601941513267879162', 'google', 'zlangber@trinity.edu', 'zlangber', 'Zach', 'Langbert',
+                        'https://lh3.googleusercontent.com/-XdUIqdMkCWA/AAAAAAAAAAI/AAAAAAAAAAA/4252rscbv5M/photo.jpg?sz=50',
+                        FALSE);
+INSERT INTO course VALUE (1, 'CSCI1234', 'ABC', 1);
+INSERT INTO user_course VALUE ('108601941513267879162', 1);
+INSERT INTO quiz VALUE (1, 'Test Quiz', 'This is a test quiz');
+INSERT INTO course_quiz VALUE (1, 1, now(), now());
+INSERT INTO user_quiz VALUE ('108601941513267879162', 1);
+
 # --- !Downs
 
 DROP TABLE IF EXISTS answer;

@@ -9,8 +9,8 @@ object Slick {
     (dir, cp, r, s) =>
       val outputDir = "app/"
       val url = "jdbc:mysql://localhost:3307/video_quizzes"
-      val user = "quiz"
-      val password = "quiz"
+      val user = "video_quizzes"
+      val password = "video_quizzes"
       val jdbcDriver = "com.mysql.jdbc.Driver"
       val slickDriver = "slick.driver.MySQLDriver"
       val pkg = "models"

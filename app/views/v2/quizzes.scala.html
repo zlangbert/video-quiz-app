@@ -12,48 +12,52 @@
     }
 
     @quizData.map { case (course, quizzes) =>
-        <h3>@{s"${course.code}-${course.section} - ${course.semester}"}</h3>
+        <h3>@{s"${course.semester} - ${course.code}-${course.section}"}</h3>
 
-        <h3>Open Quizzes</h3>
-        <table class="table quiz-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Close Time</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            <tbody>
-            @quizzes.open.map { quiz: UserQuizInfo => @* intellij can't resolve quizzes, typed to help *@
-                <tr>
-                    <td>@quiz.name</td>
-                    <td>@quiz.description</td>
-                    <td>@quiz.closeTime</td>
-                    <td>@score(quiz.score)</td>
-                </tr>
-            }
-            </tbody>
-        </table>
+        @if(quizzes.open.nonEmpty) {
+            <h3>Open Quizzes</h3>
+            <table class="table quiz-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Close Time</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @quizzes.open.map { quiz: UserQuizInfo => @* intellij can't resolve quizzes, typed to help *@
+                    <tr>
+                        <td>@quiz.name</td>
+                        <td>@quiz.description</td>
+                        <td>@quiz.closeTime</td>
+                        <td>@score(quiz.score)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
 
-        <h3>Closed Quizzes</h3>
-        <table class="table quiz-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            <tbody>
-            @quizzes.closed.map { quiz: UserQuizInfo =>
-                <tr>
-                    <td>@quiz.name</td>
-                    <td>@quiz.description</td>
-                    <td>@score(quiz.score)</td>
-                </tr>
-            }
-            </tbody>
-        </table>
+        @if(quizzes.closed.nonEmpty) {
+            <h3>Closed Quizzes</h3>
+            <table class="table quiz-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @quizzes.closed.map { quiz: UserQuizInfo =>
+                    <tr>
+                        <td>@quiz.name</td>
+                        <td>@quiz.description</td>
+                        <td>@score(quiz.score)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
     }
 }
