@@ -11,11 +11,18 @@ Vagrant.configure(2) do |config|
     vb.memory = "1024"
   end
 
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
-  # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   sudo apt-get update
-  #   sudo apt-get install -y apache2
-  # SHELL
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt-get update
+    sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password root'
+    sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password root'
+    sudo apt-get update
+    sudo apt-get -y install mysql-server
+    sed -i "s/^bind-address/#bind-address/" /etc/mysql/my.cnf
+    mysql -u root -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+    sudo service mysql restart
+
+    mysql -u root -proot -e "CREATE USER 'video_quizzes'@'%' IDENTIFIED BY 'video_quizzes';"
+    mysql -u root -proot -e "CREATE DATABASE video_quizzes;"
+    mysql -u root -proot -e "GRANT ALL PRIVILEGES ON video_quizzes.* TO 'video_quizzes'@'%'; FLUSH PRIVILEGES;"
+  SHELL
 end
